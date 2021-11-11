@@ -19,7 +19,7 @@ function Graph({data, edgeProp, pointProp}) {
   const {edges, points} = data;
   const [height, setHeight] = useState(0);
   const [hoverEdge, setHoverEdge] = useState(null);
-  const [hoverPoint, setHoverPoint] = useState(points[0]);
+  const [hoverPoint, setHoverPoint] = useState(null);
   const [selectedEdgeProp, setSelectedEdgeProp] = useState(edgeProp);
   const [selectedPointProp, setSelectedPointProp] = useState(pointProp);
   const [viewBox, setViewBox] = useState('0 0 0 0');
@@ -123,8 +123,6 @@ function Graph({data, edgeProp, pointProp}) {
         y: (p1.y + p2.y) / 2
       };
     }
-
-    setHoverPoint(points[0]);
   }
 
   function placeTargets(width, height, sourcePoint, layer) {
@@ -194,9 +192,8 @@ function Graph({data, edgeProp, pointProp}) {
     if (!p1 || !p2) return null;
 
     return (
-      <g>
+      <g key={'edge' + index}>
         <line
-          key={'line' + index}
           x1={p1.x}
           y1={p1.y}
           x2={p2.x}
@@ -220,9 +217,8 @@ function Graph({data, edgeProp, pointProp}) {
     const {center} = point;
     if (!center) return null;
     return (
-      <g>
+      <g key={'circle' + point.id}>
         <circle
-          key={'circle' + point.id}
           cx={center.x}
           cy={center.y}
           r={NODE_RADIUS}
@@ -240,6 +236,7 @@ function Graph({data, edgeProp, pointProp}) {
   }
 
   function renderPointPopup(point) {
+    console.log('Graph.js renderPointPopup: point =', point);
     return renderPopup(point, pointProps);
   }
 
@@ -257,7 +254,7 @@ function Graph({data, edgeProp, pointProp}) {
         />
         <text x={x} y={y}>
           {props.map((prop, index) => (
-            <tspan x={x + 5} y={y + (index + 1) * rowHeight}>
+            <tspan key={prop} x={x + 5} y={y + (index + 1) * rowHeight}>
               {prop}: {hoverObject[prop]}
             </tspan>
           ))}
@@ -267,17 +264,17 @@ function Graph({data, edgeProp, pointProp}) {
   }
 
   function renderSelect(forPoints) {
-    const label = (forPoints ? 'Point' : 'Edge') + ' Property';
-    const key = (forPoints ? 'point' : 'edge') + '-select';
-    const keys = forPoints ? pointProps : edgeProps;
+    const label = forPoints ? 'Point' : 'Edge';
+    const key = label + '-select';
+    const props = forPoints ? pointProps : edgeProps;
     const selected = forPoints ? selectedPointProp : selectedEdgeProp;
     const setSelected = forPoints ? setSelectedPointProp : setSelectedEdgeProp;
     return (
       <div className="select-wrapper" key={key}>
-        <p className="label">{label}</p>
+        <p className="label">{label} Property</p>
         <select value={selected} onChange={e => setSelected(e.target.value)}>
-          {keys.map(key => (
-            <option>{key}</option>
+          {props.map(prop => (
+            <option key={prop}>{prop}</option>
           ))}
         </select>
       </div>
@@ -299,10 +296,6 @@ function Graph({data, edgeProp, pointProp}) {
           <FontAwesomeIcon icon={faUndo} size="lg" />
         </button>
       </div>
-      {/* <div className="row">
-        hoverPoint = {JSON.stringify(hoverPoint)}; hoverEdge ={' '}
-        {JSON.stringify(hoverEdge)}
-      </div> */}
       <div className="container">
         <svg
           xmlns="http://www.w3.org/2000/svg"
