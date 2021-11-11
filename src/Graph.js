@@ -64,7 +64,9 @@ function Graph({data, edgeProp, pointProp}) {
 
     for (const edge of edges) {
       const p1 = pointMap[edge.source].center;
+      if (!p1) throw new Error('no center for point ' + edge.source);
       const p2 = pointMap[edge.target].center;
+      if (!p2) throw new Error('no center for point ' + edge.target);
       edge.center = {
         x: (p1.x + p2.x) / 2,
         y: (p1.y + p2.y) / 2
@@ -112,6 +114,10 @@ function Graph({data, edgeProp, pointProp}) {
       };
       targetPoint.placed = true;
       angle += deltaAngle;
+    }
+
+    for (const targetPoint of targetPoints) {
+      placeTargets(width, height, targetPoint, layer + 1);
     }
   }
 
