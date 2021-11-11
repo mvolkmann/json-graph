@@ -5,6 +5,10 @@
   --oci-light-blue: #72ccd7;
   --oci-orange: #fbb573;
 
+  .arrow {
+    fill: var(--oci-light-blue);
+  }
+
   button {
     --size: 2.5rem;
     background-color: lightgray;

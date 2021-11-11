@@ -7,6 +7,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import './Graph.scss';
 
+const ARROW_LENGTH = 10;
 const DELTA_ARC_LENGTH = 50;
 const DELTA_RADIUS = 100;
 const HIDDEN_PROPS = new Set(['center', 'id', 'placed', 'source', 'target']);
@@ -54,6 +55,43 @@ function Graph({data, edgeProp, pointProp}) {
     setHoverEdge(edge);
   }
 
+  function getArrowPoints(p1, p2) {
+    const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+
+    const arrowTip = {
+      x: p2.x + NODE_RADIUS * Math.cos(Math.PI - angle),
+      y: p2.y - NODE_RADIUS * Math.sin(Math.PI - angle)
+    };
+
+    // Find the middle of the arrow base.
+    const middle = {
+      x: p2.x + (NODE_RADIUS + ARROW_LENGTH) * Math.cos(Math.PI - angle),
+      y: p2.y - (NODE_RADIUS + ARROW_LENGTH) * Math.sin(Math.PI - angle)
+    };
+
+    const dx = (Math.sin(angle) * ARROW_LENGTH) / 2;
+    const dy = (Math.cos(angle) * ARROW_LENGTH) / 2;
+    const arrowLeft = {x: middle.x - dx, y: middle.y + dy};
+    const arrowRight = {x: middle.x + dx, y: middle.y - dy};
+
+    return (
+      `${arrowTip.x},${arrowTip.y} ` +
+      `${arrowLeft.x},${arrowLeft.y} ` +
+      `${arrowRight.x},${arrowRight.y}`
+    );
+  }
+
+  function getTargetPoints(point) {
+    // Find all the edges starting from this point.
+    const targetEdges = edges.filter(edge => edge.source === point.id);
+
+    // Find all the points that are targets of these edges
+    // and have not been placed yet.
+    return targetEdges
+      .map(edge => pointMap[edge.target])
+      .filter(point => !point.placed);
+  }
+
   function layout(width, height) {
     // Place the first point in the center.
     const firstPoint = points[0];
@@ -75,19 +113,6 @@ function Graph({data, edgeProp, pointProp}) {
 
     setHoverPoint(points[0]);
   }
-
-  function getTargetPoints(point) {
-    // Find all the edges starting from this point.
-    const targetEdges = edges.filter(edge => edge.source === point.id);
-
-    // Find all the points that are targets of these edges
-    // and have not been placed yet.
-    return targetEdges
-      .map(edge => pointMap[edge.target])
-      .filter(point => !point.placed);
-  }
-
-  const radiansToDegrees = radians => (radians * 180) / (2 * Math.PI);
 
   function placeTargets(width, height, sourcePoint, layer) {
     const targetPoints = getTargetPoints(sourcePoint);
@@ -146,11 +171,14 @@ function Graph({data, edgeProp, pointProp}) {
     setHoverPoint(point);
   }
 
+  const radiansToDegrees = radians => (radians * 180) / (2 * Math.PI);
+
   function renderEdge(edge, index) {
     const {source, target} = edge;
     const p1 = pointMap[source].center;
     const p2 = pointMap[target].center;
     if (!p1 || !p2) return null;
+
     return (
       <g>
         <line
@@ -162,7 +190,7 @@ function Graph({data, edgeProp, pointProp}) {
           onMouseEnter={() => edgeHover(edge)}
           onMouseLeave={() => setHoverEdge(null)}
         />
-        ;
+        <polygon class="arrow" points={getArrowPoints(p1, p2)} />
         <text key={'text' + index} x={edge.center.x} y={edge.center.y}>
           {edge[selectedEdgeProp]}
         </text>
