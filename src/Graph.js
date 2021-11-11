@@ -53,6 +53,10 @@ function Graph({data, edgeProp, pointProp}) {
       .sort();
   }
 
+  function edgeHover(edge) {
+    setHoverEdge(edge);
+  }
+
   function layout() {
     for (const point of points) {
       point.center = {
@@ -71,10 +75,6 @@ function Graph({data, edgeProp, pointProp}) {
     }
 
     setHoverPoint(points[0]);
-  }
-
-  function edgeHover(edge) {
-    setHoverEdge(edge);
   }
 
   function pointHover(point) {
@@ -105,6 +105,10 @@ function Graph({data, edgeProp, pointProp}) {
     );
   }
 
+  function renderEdgePopup(edge) {
+    return renderPopup(edge, edgeProps);
+  }
+
   function renderPoint(point) {
     const {center} = point;
     if (!center) return null;
@@ -121,15 +125,11 @@ function Graph({data, edgeProp, pointProp}) {
             setHoverPoint(null);
           }}
         />
-        {/* <text key={'text' + point.id} x={center.x} y={center.y}>
+        <text key={'text' + point.id} x={center.x} y={center.y}>
           {point[selectedPointProp]}
-        </text> */}
+        </text>
       </g>
     );
-  }
-
-  function renderEdgePopup(edge) {
-    return renderPopup(edge, edgeProps);
   }
 
   function renderPointPopup(point) {
