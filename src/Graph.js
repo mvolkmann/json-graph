@@ -59,7 +59,7 @@ function Graph({data, edgeProp, pointProp}) {
     firstPoint.center = {x: width / 2, y: height / 2};
     firstPoint.placed = true;
 
-    placeTargets(firstPoint);
+    placeTargetsRadially(firstPoint);
 
     for (const edge of edges) {
       const p1 = pointMap[edge.source].center;
@@ -73,17 +73,15 @@ function Graph({data, edgeProp, pointProp}) {
     setHoverPoint(points[0]);
   }
 
-  function placeTargets(point) {
+  function placeTargetsRadially(point) {
     // Find all the edges starting from this point.
     const targetEdges = edges.filter(edge => edge.source === point.id);
-    console.log('Graph.js placeTargets: targetEdges =', targetEdges);
 
     // Find all the points that are targets of these edges
     // and have not been placed yet.
     const targetPoints = targetEdges
       .map(edge => pointMap[edge.target])
       .filter(point => !point.placed);
-    console.log('Graph.js placeTargets: targetPoints =', targetPoints);
 
     // Calculate the delta angle in radians to use for
     // spreading these points around a circle.
