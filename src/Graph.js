@@ -7,6 +7,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import './Graph.scss';
 
+const DELTA_ARC_LENGTH = 50;
 const DELTA_RADIUS = 100;
 const HIDDEN_PROPS = new Set(['center', 'id', 'placed', 'source', 'target']);
 const NODE_RADIUS = 20;
@@ -59,7 +60,7 @@ function Graph({data, edgeProp, pointProp}) {
     firstPoint.center = {x: width / 2, y: height / 2};
     firstPoint.placed = true;
 
-    placeTargetsRadially(firstPoint);
+    placeTargetsRadially(width, height, firstPoint);
 
     for (const edge of edges) {
       const p1 = pointMap[edge.source].center;
@@ -73,29 +74,65 @@ function Graph({data, edgeProp, pointProp}) {
     setHoverPoint(points[0]);
   }
 
-  function placeTargetsRadially(point) {
+  function getTargetPoints(point) {
     // Find all the edges starting from this point.
     const targetEdges = edges.filter(edge => edge.source === point.id);
 
     // Find all the points that are targets of these edges
     // and have not been placed yet.
-    const targetPoints = targetEdges
+    return targetEdges
       .map(edge => pointMap[edge.target])
       .filter(point => !point.placed);
+  }
+
+  const radiansToDegrees = radians => (radians * 180) / (2 * Math.PI);
+
+  function placeTargets(width, height, sourcePoint, layer) {
+    const targetPoints = getTargetPoints(sourcePoint);
+    const count = targetPoints.length;
+    if (count === 0) return;
+
+    const targetRadius = layer * DELTA_RADIUS;
+    const arcLength = (count - 1) * DELTA_ARC_LENGTH;
+    const arcAngle = arcLength / targetRadius;
+    const deltaAngle = arcAngle / (count - 1);
+
+    const sourceCenter = sourcePoint.center;
+    const graphCenter = {x: width / 2, y: height / 2};
+    const sourceAngle = Math.atan2(
+      sourceCenter.y - graphCenter.y,
+      sourceCenter.x - graphCenter.x
+    );
+
+    let angle = sourceAngle - arcAngle / 2;
+    for (const targetPoint of targetPoints) {
+      targetPoint.center = {
+        x: graphCenter.x + Math.cos(angle) * targetRadius,
+        y: graphCenter.y + Math.sin(angle) * targetRadius
+      };
+      targetPoint.placed = true;
+      angle += deltaAngle;
+    }
+  }
+
+  function placeTargetsRadially(width, height, sourcePoint) {
+    const targetPoints = getTargetPoints(sourcePoint);
 
     // Calculate the delta angle in radians to use for
     // spreading these points around a circle.
     const deltaAngle = (2 * Math.PI) / targetPoints.length;
 
-    const {center} = point;
+    const {center} = sourcePoint;
     let angle = 0;
-    for (const point of targetPoints) {
-      point.center = {
+    for (const targetPoint of targetPoints) {
+      targetPoint.center = {
         x: center.x + DELTA_RADIUS * Math.cos(angle),
         y: center.y + DELTA_RADIUS * Math.sin(angle)
       };
-      point.placed = true;
+      targetPoint.placed = true;
       angle += deltaAngle;
+
+      placeTargets(width, height, targetPoint, 2);
     }
   }
 

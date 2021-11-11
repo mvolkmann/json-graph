@@ -5,7 +5,7 @@ import data from './graph.json';
 function App() {
   return (
     <div className="App">
-      <Graph data={data} edgeProp="time" pointProp="size" />
+      <Graph data={data} edgeProp="time" pointProp="name" />
     </div>
   );
 }
