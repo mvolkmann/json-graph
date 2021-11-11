@@ -1,0 +1,36 @@
+{
+  "points": [
+    {
+      "id": 1,
+      "name": "alpha",
+      "color": "red",
+      "size": 7
+    },
+    {
+      "id": 2,
+      "name": "beta",
+      "color": "green",
+      "size": 10
+    },
+    {
+      "id": 3,
+      "name": "gamma",
+      "color": "blue",
+      "size": 8
+    }
+  ],
+  "edges": [
+    {
+      "source": 1,
+      "target": 2,
+      "count": 3,
+      "time": 34
+    },
+    {
+      "source": 1,
+      "target": 3,
+      "count": 2,
+      "time": 25
+    }
+  ]
+}

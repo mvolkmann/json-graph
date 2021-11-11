@@ -1,0 +1,87 @@
+.graph {
+  --height: 600px;
+  --width: 1000px;
+  --oci-dark-blue: #285ba8;
+  --oci-light-blue: #72ccd7;
+  --oci-orange: #fbb573;
+
+  button {
+    --size: 2.5rem;
+    background-color: lightgray;
+    border: 1px solid gray;
+    border-radius: 5px;
+    height: var(--size);
+    width: var(--size);
+
+    &:hover {
+      background-color: lightgreen;
+    }
+  }
+
+  circle {
+    fill: white;
+    stroke: var(--oci-orange);
+    stroke-width: 2px;
+  }
+
+  circle:hover {
+    stroke: green;
+  }
+
+  .container {
+    height: var(--height);
+    width: var(--width);
+    margin-top: 1rem;
+    outline: 1px solid red;
+    overflow: scroll;
+  }
+
+  .label {
+    font-weight: bold;
+  }
+
+  line {
+    stroke: var(--oci-light-blue);
+    stroke-width: 3px;
+  }
+
+  line:hover {
+    stroke: green;
+  }
+
+  .popup {
+    & > rect {
+      fill: lightgray;
+    }
+    & > text {
+      dominant-baseline: unset;
+      fill: black;
+      font-size: 0.5rem;
+      text-anchor: unset;
+    }
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .select-wrapper {
+    display: flex;
+    flex-direction: column;
+
+    p {
+      margin-bottom: 0.5rem;
+      margin-top: 0;
+    }
+  }
+
+  text {
+    dominant-baseline: central;
+    fill: var(--oci-dark-blue);
+    font-size: 0.8rem;
+    pointer-events: none;
+    text-anchor: middle;
+  }
+}
