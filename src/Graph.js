@@ -7,10 +7,9 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import './Graph.scss';
 
-const HEIGHT = 300;
-const HIDDEN_PROPS = new Set(['center', 'id', 'source', 'target']);
+const DELTA_RADIUS = 100;
+const HIDDEN_PROPS = new Set(['center', 'id', 'placed', 'source', 'target']);
 const NODE_RADIUS = 20;
-const WIDTH = 800;
 const ZOOM_FACTOR = 0.1;
 
 function Graph({data, edgeProp, pointProp}) {
@@ -19,7 +18,6 @@ function Graph({data, edgeProp, pointProp}) {
   const [height, setHeight] = useState(0);
   const [hoverEdge, setHoverEdge] = useState(null);
   const [hoverPoint, setHoverPoint] = useState(points[0]);
-  const [layoutComplete, setLayoutComplete] = useState(false);
   const [selectedEdgeProp, setSelectedEdgeProp] = useState(edgeProp);
   const [selectedPointProp, setSelectedPointProp] = useState(pointProp);
   const [viewBox, setViewBox] = useState('0 0 0 0');
@@ -33,6 +31,9 @@ function Graph({data, edgeProp, pointProp}) {
     const h = parseInt(style.getPropertyValue('--height'));
     setHeight(h);
     setViewBox(`0 0 ${w} ${h}`);
+
+    layout(w, h);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const edgeProps = getObjectProps(edges[0]);
@@ -41,11 +42,6 @@ function Graph({data, edgeProp, pointProp}) {
     acc[point.id] = point;
     return acc;
   }, {});
-
-  if (!layoutComplete) {
-    layout();
-    setLayoutComplete(true);
-  }
 
   function getObjectProps(object) {
     return Object.keys(object)
@@ -57,13 +53,13 @@ function Graph({data, edgeProp, pointProp}) {
     setHoverEdge(edge);
   }
 
-  function layout() {
-    for (const point of points) {
-      point.center = {
-        x: Math.random() * WIDTH,
-        y: Math.random() * HEIGHT
-      };
-    }
+  function layout(width, height) {
+    // Place the first point in the center.
+    const firstPoint = points[0];
+    firstPoint.center = {x: width / 2, y: height / 2};
+    firstPoint.placed = true;
+
+    placeTargets(firstPoint);
 
     for (const edge of edges) {
       const p1 = pointMap[edge.source].center;
@@ -75,6 +71,34 @@ function Graph({data, edgeProp, pointProp}) {
     }
 
     setHoverPoint(points[0]);
+  }
+
+  function placeTargets(point) {
+    // Find all the edges starting from this point.
+    const targetEdges = edges.filter(edge => edge.source === point.id);
+    console.log('Graph.js placeTargets: targetEdges =', targetEdges);
+
+    // Find all the points that are targets of these edges
+    // and have not been placed yet.
+    const targetPoints = targetEdges
+      .map(edge => pointMap[edge.target])
+      .filter(point => !point.placed);
+    console.log('Graph.js placeTargets: targetPoints =', targetPoints);
+
+    // Calculate the delta angle in radians to use for
+    // spreading these points around a circle.
+    const deltaAngle = (2 * Math.PI) / targetPoints.length;
+
+    const {center} = point;
+    let angle = 0;
+    for (const point of targetPoints) {
+      point.center = {
+        x: center.x + DELTA_RADIUS * Math.cos(angle),
+        y: center.y + DELTA_RADIUS * Math.sin(angle)
+      };
+      point.placed = true;
+      angle += deltaAngle;
+    }
   }
 
   function pointHover(point) {
@@ -137,7 +161,7 @@ function Graph({data, edgeProp, pointProp}) {
   }
 
   function renderPopup(hoverObject, props) {
-    if (!hoverObject) return null;
+    if (!hoverObject || !hoverObject.center) return null;
     const {x, y} = hoverObject.center;
     return (
       <g className="popup">

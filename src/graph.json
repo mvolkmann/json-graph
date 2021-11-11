@@ -17,6 +17,12 @@
       "name": "gamma",
       "color": "blue",
       "size": 8
+    },
+    {
+      "id": 4,
+      "name": "delta",
+      "color": "yellow",
+      "size": 5
     }
   ],
   "edges": [
@@ -31,6 +37,12 @@
       "target": 3,
       "count": 2,
       "time": 25
+    },
+    {
+      "source": 1,
+      "target": 4,
+      "count": 4,
+      "time": 42
     }
   ]
 }
