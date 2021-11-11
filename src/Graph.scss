@@ -51,12 +51,14 @@
 
   .popup {
     & > rect {
-      fill: lightgray;
+      fill: #cccccc90;
+      stroke: gray;
+      stroke-width: 2;
     }
     & > text {
       dominant-baseline: unset;
       fill: black;
-      font-size: 0.5rem;
+      font-size: 0.7rem;
       text-anchor: unset;
     }
   }

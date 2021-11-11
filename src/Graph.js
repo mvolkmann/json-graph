@@ -204,12 +204,18 @@ function Graph({data, edgeProp, pointProp}) {
   function renderPopup(hoverObject, props) {
     if (!hoverObject || !hoverObject.center) return null;
     const {x, y} = hoverObject.center;
+    const rowHeight = 15;
     return (
       <g className="popup">
-        <rect x={x} y={y} width="60" height={5 + props.length * 10} />
+        <rect
+          x={x}
+          y={y}
+          width="80"
+          height={(props.length + 0.5) * rowHeight}
+        />
         <text x={x} y={y}>
           {props.map((prop, index) => (
-            <tspan x={x + 5} y={y + (index + 1) * 10}>
+            <tspan x={x + 5} y={y + (index + 1) * rowHeight}>
               {prop}: {hoverObject[prop]}
             </tspan>
           ))}
