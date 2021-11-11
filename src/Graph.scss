@@ -38,6 +38,11 @@
     margin-top: 1rem;
     outline: 1px solid red;
     overflow: scroll;
+    position: relative;
+
+    & > svg {
+      position: absolute;
+    }
   }
 
   .label {

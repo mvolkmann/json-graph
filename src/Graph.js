@@ -1,4 +1,4 @@
-import {useCallback, useState} from 'react';
+import {useCallback, useRef, useState} from 'react';
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
 import {
   faSearchMinus,
@@ -38,12 +38,25 @@ function Graph({data, edgeProp, pointProp}) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const svgRef = useRef(null);
+
   const edgeProps = getObjectProps(edges[0]);
   const pointProps = getObjectProps(points[0]);
   const pointMap = points.reduce((acc, point) => {
     acc[point.id] = point;
     return acc;
   }, {});
+
+  function adjustZoom(newZoom) {
+    setZoom(newZoom);
+    const newWidth = width * newZoom;
+    const newHeight = height * newZoom;
+    const dx = (width - newWidth) / 2;
+    const dy = (height - newHeight) / 2;
+    const {style} = svgRef.current;
+    style.left = dx + 'px';
+    style.top = dy + 'px';
+  }
 
   function getObjectProps(object) {
     return Object.keys(object)
@@ -171,7 +184,8 @@ function Graph({data, edgeProp, pointProp}) {
     setHoverPoint(point);
   }
 
-  const radiansToDegrees = radians => (radians * 180) / (2 * Math.PI);
+  // For debugging ...
+  //const radiansToDegrees = radians => (radians * 180) / (2 * Math.PI);
 
   function renderEdge(edge, index) {
     const {source, target} = edge;
@@ -190,7 +204,7 @@ function Graph({data, edgeProp, pointProp}) {
           onMouseEnter={() => edgeHover(edge)}
           onMouseLeave={() => setHoverEdge(null)}
         />
-        <polygon class="arrow" points={getArrowPoints(p1, p2)} />
+        <polygon className="arrow" points={getArrowPoints(p1, p2)} />
         <text key={'text' + index} x={edge.center.x} y={edge.center.y}>
           {edge[selectedEdgeProp]}
         </text>
@@ -275,13 +289,13 @@ function Graph({data, edgeProp, pointProp}) {
       <div className="row">
         {renderSelect(true)}
         {renderSelect(false)}
-        <button onClick={() => setZoom(zoom + ZOOM_FACTOR)}>
+        <button onClick={() => adjustZoom(zoom + ZOOM_FACTOR)}>
           <FontAwesomeIcon icon={faSearchPlus} size="lg" />
         </button>
-        <button onClick={() => setZoom(zoom - ZOOM_FACTOR)}>
+        <button onClick={() => adjustZoom(zoom - ZOOM_FACTOR)}>
           <FontAwesomeIcon icon={faSearchMinus} size="lg" />
         </button>
-        <button onClick={() => setZoom(1)}>
+        <button onClick={() => adjustZoom(1)}>
           <FontAwesomeIcon icon={faUndo} size="lg" />
         </button>
       </div>
@@ -292,6 +306,7 @@ function Graph({data, edgeProp, pointProp}) {
       <div className="container">
         <svg
           xmlns="http://www.w3.org/2000/svg"
+          ref={svgRef}
           viewBox={viewBox}
           style={{width: width * zoom + 'px', height: height * zoom + 'px'}}
         >
