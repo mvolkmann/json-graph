@@ -1,9 +1,18 @@
 .graph {
   --height: 600px;
   --width: 1000px;
+
   --oci-dark-blue: #285ba8;
   --oci-light-blue: #72ccd7;
   --oci-orange: #fbb573;
+
+  --button-hover-color: lightgreen;
+  --edge-color: var(--oci-light-blue);
+  --edge-width: 2;
+  --hover-color: green;
+  --point-color: var(--oci-orange);
+  --point-width: 3;
+  --text-color: var(--oci-dark-blue);
 
   .arrow {
     fill: var(--oci-light-blue);
@@ -18,25 +27,25 @@
     width: var(--size);
 
     &:hover {
-      background-color: lightgreen;
+      background-color: var(--button-hover-color);
     }
   }
 
   circle {
     fill: white;
-    stroke: var(--oci-orange);
-    stroke-width: 2px;
+    stroke: var(--point-color);
+    stroke-width: var(--point-width);
   }
 
   circle:hover {
-    stroke: green;
+    stroke: var(--hover-color);
   }
 
   .container {
     height: var(--height);
     width: var(--width);
     margin-top: 1rem;
-    outline: 1px solid red;
+    outline: 1px dashed red;
     overflow: scroll;
     position: relative;
 
@@ -45,17 +54,33 @@
     }
   }
 
+  .cycle {
+    stroke: var(--edge-color);
+    stroke-width: var(--edge-width);
+  }
+
+  .edge:hover {
+    pointer-events: bounding-box;
+
+    & > circle,
+    & > line {
+      stroke: var(--hover-color);
+      //   stroke: inherit;
+    }
+
+    & > polygon {
+      fill: var(--hover-color);
+      //   fill: inherit;
+    }
+  }
+
   .label {
     font-weight: bold;
   }
 
   line {
-    stroke: var(--oci-light-blue);
-    stroke-width: 4px;
-  }
-
-  line:hover {
-    stroke: green;
+    stroke: var(--edge-color);
+    stroke-width: var(--edge-width);
   }
 
   .popup {
@@ -92,7 +117,7 @@
 
   text {
     dominant-baseline: central;
-    fill: var(--oci-dark-blue);
+    fill: var(--text-color);
     font-size: 0.8rem;
     pointer-events: none;
     text-anchor: middle;

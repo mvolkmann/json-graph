@@ -85,18 +85,32 @@ function Graph({data, edgeProp, pointProp}) {
     setHoverEdge(edge);
   }
 
-  function getArrowPoints(p1, p2) {
-    const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+  function renderArrow(edge) {
+    const {source, target} = edge;
+    const p1 = pointMap[source];
+    const p2 = pointMap[target];
+    const center1 = p1._center;
+    const center2 = p2._center;
+    if (!center1 || !center2) return null;
 
-    const arrowTip = {
-      x: p2.x + NODE_RADIUS * Math.cos(Math.PI - angle),
-      y: p2.y - NODE_RADIUS * Math.sin(Math.PI - angle)
+    const angle = Math.atan2(center2.y - center1.y, center2.x - center1.x);
+    const complementaryAngle = Math.PI - angle;
+
+    const tip = {
+      x: center2.x + NODE_RADIUS * Math.cos(complementaryAngle),
+      y: center2.y - NODE_RADIUS * Math.sin(complementaryAngle)
     };
+
+    return renderArrow2(edge, angle, tip);
+  }
+
+  function renderArrow2(edge, angle, tip) {
+    const complementaryAngle = Math.PI - angle;
 
     // Find the middle of the arrow base.
     const middle = {
-      x: p2.x + (NODE_RADIUS + ARROW_LENGTH) * Math.cos(Math.PI - angle),
-      y: p2.y - (NODE_RADIUS + ARROW_LENGTH) * Math.sin(Math.PI - angle)
+      x: tip.x + ARROW_LENGTH * Math.cos(complementaryAngle),
+      y: tip.y - ARROW_LENGTH * Math.sin(complementaryAngle)
     };
 
     const dx = (Math.sin(angle) * ARROW_LENGTH) / 2;
@@ -104,10 +118,16 @@ function Graph({data, edgeProp, pointProp}) {
     const arrowLeft = {x: middle.x - dx, y: middle.y + dy};
     const arrowRight = {x: middle.x + dx, y: middle.y - dy};
 
-    return (
-      `${arrowTip.x},${arrowTip.y} ` +
+    const points =
+      `${tip.x},${tip.y} ` +
       `${arrowLeft.x},${arrowLeft.y} ` +
-      `${arrowRight.x},${arrowRight.y}`
+      `${arrowRight.x},${arrowRight.y}`;
+    return (
+      <polygon
+        className="arrow"
+        points={points}
+        onMouseEnter={() => edgeHover(edge)}
+      />
     );
   }
 
@@ -232,21 +252,47 @@ function Graph({data, edgeProp, pointProp}) {
 
   function renderEdge(edge, index) {
     const {source, target} = edge;
-    const p1 = pointMap[source]._center;
-    const p2 = pointMap[target]._center;
+    const p1 = pointMap[source];
+    const p2 = pointMap[target];
     if (!p1 || !p2) return null;
 
+    const center1 = p1._center;
+    const center2 = p2._center;
+    if (!center1 || !center2) return null;
+
+    if (p1 === p2) {
+      const cx = center1.x - NODE_RADIUS * 0.75;
+      const cy = center1.y - NODE_RADIUS * 0.75;
+      return (
+        <g class="edge">
+          <circle
+            class="cycle"
+            key={'self' + p1.id}
+            cx={cx}
+            cy={cy}
+            r={NODE_RADIUS / 2}
+            onMouseEnter={() => edgeHover(edge)}
+          />
+          {/* The numbers here were arrived at by trial and error. */}
+          {renderArrow2(edge, 0.65, {
+            x: cx + NODE_RADIUS * 0.48,
+            y: cy - NODE_RADIUS * 0.25
+          })}
+        </g>
+      );
+    }
+
     return (
-      <g key={'edge' + index}>
+      <g class="edge" key={'edge' + index}>
         <line
-          x1={p1.x}
-          y1={p1.y}
-          x2={p2.x}
-          y2={p2.y}
+          x1={center1.x}
+          y1={center1.y}
+          x2={center2.x}
+          y2={center2.y}
           onMouseEnter={() => edgeHover(edge)}
           //onMouseLeave={() => setHoverEdge(null)}
         />
-        <polygon className="arrow" points={getArrowPoints(p1, p2)} />
+        {renderArrow(edge)}
         <text key={'text' + index} x={edge._center.x} y={edge._center.y}>
           {edge[selectedEdgeProp]}
         </text>
