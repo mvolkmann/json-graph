@@ -169,7 +169,8 @@ function Graph({data, edgeProp, pointProp}) {
       targetPoint._layer = layer;
 
       if (pointOverlaps(targetPoint)) {
-        const newRadius = targetRadius + DELTA_RADIUS;
+        const newRadius = targetRadius + DELTA_RADIUS * 0.5;
+        angle += 0.07; // offsets lines just a bit for less overlap
         targetPoint._center = {
           x: graphCenter.x + Math.cos(angle) * newRadius,
           y: graphCenter.y + Math.sin(angle) * newRadius
