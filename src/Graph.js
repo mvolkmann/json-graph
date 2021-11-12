@@ -41,6 +41,8 @@ function Graph({data, edgeProp, pointProp}) {
   const forceUpdate = React.useCallback(() => updateState({}), []);
 
   const graphRef = useCallback(element => {
+    if (!element) return;
+
     const style = getComputedStyle(element);
     const w = parseInt(style.getPropertyValue('--width'));
     setWidth(w);
@@ -407,7 +409,6 @@ function Graph({data, edgeProp, pointProp}) {
         <button onClick={() => changeCenter(points[0])}>
           <FontAwesomeIcon icon={faSync} size="lg" />
         </button>
-        <p>{Date.now()}</p>
       </div>
       <div className="container">
         <svg
