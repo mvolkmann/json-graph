@@ -12,7 +12,6 @@
   --hover-color: green;
   --point-color: var(--oci-orange);
   --point-width: 3;
-  --selected-point-color: var(--oci-dark-blue);
   --text-color: var(--oci-dark-blue);
 
   .arrow {
@@ -32,8 +31,14 @@
     }
   }
 
-  .center > circle {
-    stroke: var(--selected-point-color);
+  .center {
+    & > circle {
+      fill: var(--hover-color);
+    }
+
+    & > text {
+      stroke: white;
+    }
   }
 
   circle {

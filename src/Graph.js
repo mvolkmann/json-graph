@@ -4,6 +4,7 @@ import {
   faCrosshairs,
   faSearchMinus,
   faSearchPlus,
+  faSync,
   faUndo
 } from '@fortawesome/free-solid-svg-icons';
 import './Graph.scss';
@@ -73,11 +74,11 @@ function Graph({data, edgeProp, pointProp}) {
     style.top = dy + 'px';
   }
 
-  function changeCenter() {
+  function changeCenter(point) {
     // Allow all the points to be "placed" again.
     Object.values(pointMap).map(p => (p._placed = false));
 
-    layout(width, height, centerPoint);
+    layout(width, height, point || centerPoint);
     forceUpdate();
   }
 
@@ -127,6 +128,9 @@ function Graph({data, edgeProp, pointProp}) {
         y: (p1.y + p2.y) / 2
       };
     }
+
+    // Clear this so the center point doesn't render as being selected.
+    setCenterPoint(null);
   }
 
   function placeTargets(width, height, sourcePoint, layer) {
@@ -399,6 +403,9 @@ function Graph({data, edgeProp, pointProp}) {
         </button>
         <button onClick={() => changeCenter()}>
           <FontAwesomeIcon icon={faCrosshairs} size="lg" />
+        </button>
+        <button onClick={() => changeCenter(points[0])}>
+          <FontAwesomeIcon icon={faSync} size="lg" />
         </button>
         <p>{Date.now()}</p>
       </div>
