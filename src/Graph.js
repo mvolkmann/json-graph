@@ -1,6 +1,7 @@
-import {useCallback, useRef, useState} from 'react';
+import React, {useCallback, useRef, useState} from 'react';
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
 import {
+  faCrosshairs,
   faSearchMinus,
   faSearchPlus,
   faUndo
@@ -25,6 +26,7 @@ const ZOOM_FACTOR = 0.1;
 function Graph({data, edgeProp, pointProp}) {
   console.log('Graph.js Graph: entered');
   const {edges, points} = data;
+  const [centerPoint, setCenterPoint] = useState(null);
   const [height, setHeight] = useState(0);
   const [hoverEdge, setHoverEdge] = useState(null);
   const [hoverPoint, setHoverPoint] = useState(null);
@@ -34,6 +36,9 @@ function Graph({data, edgeProp, pointProp}) {
   const [width, setWidth] = useState(0);
   const [zoom, setZoom] = useState(1.0);
 
+  const [, updateState] = React.useState();
+  const forceUpdate = React.useCallback(() => updateState({}), []);
+
   const graphRef = useCallback(element => {
     const style = getComputedStyle(element);
     const w = parseInt(style.getPropertyValue('--width'));
@@ -42,7 +47,9 @@ function Graph({data, edgeProp, pointProp}) {
     setHeight(h);
     setViewBox(`0 0 ${w} ${h}`);
 
-    layout(w, h);
+    const centerPoint = points[0];
+    setCenterPoint(centerPoint);
+    layout(w, h, centerPoint);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -66,6 +73,14 @@ function Graph({data, edgeProp, pointProp}) {
     style.top = dy + 'px';
   }
 
+  function changeCenter() {
+    // Allow all the points to be "placed" again.
+    Object.values(pointMap).map(p => (p._placed = false));
+
+    layout(width, height, centerPoint);
+    forceUpdate();
+  }
+
   function distanceBetweenPoints(point1, point2) {
     const center1 = point1._center;
     const center2 = point2._center;
@@ -85,52 +100,6 @@ function Graph({data, edgeProp, pointProp}) {
     setHoverEdge(edge);
   }
 
-  function renderArrow(edge) {
-    const {source, target} = edge;
-    const p1 = pointMap[source];
-    const p2 = pointMap[target];
-    const center1 = p1._center;
-    const center2 = p2._center;
-    if (!center1 || !center2) return null;
-
-    const angle = Math.atan2(center2.y - center1.y, center2.x - center1.x);
-    const complementaryAngle = Math.PI - angle;
-
-    const tip = {
-      x: center2.x + NODE_RADIUS * Math.cos(complementaryAngle),
-      y: center2.y - NODE_RADIUS * Math.sin(complementaryAngle)
-    };
-
-    return renderArrow2(edge, angle, tip);
-  }
-
-  function renderArrow2(edge, angle, tip) {
-    const complementaryAngle = Math.PI - angle;
-
-    // Find the middle of the arrow base.
-    const middle = {
-      x: tip.x + ARROW_LENGTH * Math.cos(complementaryAngle),
-      y: tip.y - ARROW_LENGTH * Math.sin(complementaryAngle)
-    };
-
-    const dx = (Math.sin(angle) * ARROW_LENGTH) / 2;
-    const dy = (Math.cos(angle) * ARROW_LENGTH) / 2;
-    const arrowLeft = {x: middle.x - dx, y: middle.y + dy};
-    const arrowRight = {x: middle.x + dx, y: middle.y - dy};
-
-    const points =
-      `${tip.x},${tip.y} ` +
-      `${arrowLeft.x},${arrowLeft.y} ` +
-      `${arrowRight.x},${arrowRight.y}`;
-    return (
-      <polygon
-        className="arrow"
-        points={points}
-        onMouseEnter={() => edgeHover(edge)}
-      />
-    );
-  }
-
   function getTargetPoints(point) {
     // Find all the edges starting from this point.
     const targetEdges = edges.filter(edge => edge.source === point.id);
@@ -142,20 +111,17 @@ function Graph({data, edgeProp, pointProp}) {
       .filter(point => !point._placed);
   }
 
-  function layout(width, height) {
+  function layout(width, height, centerPoint) {
     // Place the first point in the center.
-    const firstPoint = points[0];
-    firstPoint._center = {x: width / 2, y: height / 2};
-    firstPoint._layer = 0;
-    firstPoint._placed = true;
+    centerPoint._center = {x: width / 2, y: height / 2};
+    centerPoint._layer = 0;
+    centerPoint._placed = true;
 
-    placeTargetsRadially(width, height, firstPoint);
+    placeTargetsRadially(width, height, centerPoint);
 
     for (const edge of edges) {
       const p1 = pointMap[edge.source]._center;
-      if (!p1) throw new Error('no center for point ' + edge.source);
       const p2 = pointMap[edge.target]._center;
-      if (!p2) throw new Error('no center for point ' + edge.target);
       edge._center = {
         x: (p1.x + p2.x) / 2,
         y: (p1.y + p2.y) / 2
@@ -237,7 +203,7 @@ function Graph({data, edgeProp, pointProp}) {
   function pointOverlaps(point) {
     const {_layer} = point;
     const pointsToCheck = Object.values(pointMap).filter(
-      p => p._layer >= _layer
+      p => p._placed && p._layer >= _layer
     );
     return pointsToCheck.some(p => {
       // Don't check a point against itself.
@@ -250,11 +216,58 @@ function Graph({data, edgeProp, pointProp}) {
   // For debugging ...
   //const radiansToDegrees = radians => (radians * 180) / (2 * Math.PI);
 
+  function renderArrow(edge) {
+    const {source, target} = edge;
+    const p1 = pointMap[source];
+    const p2 = pointMap[target];
+    const center1 = p1._center;
+    const center2 = p2._center;
+    if (!center1 || !center2) return null;
+
+    const angle = Math.atan2(center2.y - center1.y, center2.x - center1.x);
+    const complementaryAngle = Math.PI - angle;
+
+    const tip = {
+      x: center2.x + NODE_RADIUS * Math.cos(complementaryAngle),
+      y: center2.y - NODE_RADIUS * Math.sin(complementaryAngle)
+    };
+
+    return renderArrow2(edge, angle, tip);
+  }
+
+  function renderArrow2(edge, angle, tip) {
+    const complementaryAngle = Math.PI - angle;
+
+    // Find the middle of the arrow base.
+    const middle = {
+      x: tip.x + ARROW_LENGTH * Math.cos(complementaryAngle),
+      y: tip.y - ARROW_LENGTH * Math.sin(complementaryAngle)
+    };
+
+    const dx = (Math.sin(angle) * ARROW_LENGTH) / 2;
+    const dy = (Math.cos(angle) * ARROW_LENGTH) / 2;
+    const arrowLeft = {x: middle.x - dx, y: middle.y + dy};
+    const arrowRight = {x: middle.x + dx, y: middle.y - dy};
+
+    const points =
+      `${tip.x},${tip.y} ` +
+      `${arrowLeft.x},${arrowLeft.y} ` +
+      `${arrowRight.x},${arrowRight.y}`;
+    return (
+      <polygon
+        className="arrow"
+        points={points}
+        onMouseEnter={() => edgeHover(edge)}
+      />
+    );
+  }
+
   function renderEdge(edge, index) {
     const {source, target} = edge;
     const p1 = pointMap[source];
     const p2 = pointMap[target];
     if (!p1 || !p2) return null;
+    if (!p1._placed || !p2._placed) return null;
 
     const center1 = p1._center;
     const center2 = p2._center;
@@ -264,10 +277,9 @@ function Graph({data, edgeProp, pointProp}) {
       const cx = center1.x - NODE_RADIUS * 0.75;
       const cy = center1.y - NODE_RADIUS * 0.75;
       return (
-        <g class="edge">
+        <g className="edge" key={'self' + p1.id}>
           <circle
-            class="cycle"
-            key={'self' + p1.id}
+            className="cycle"
             cx={cx}
             cy={cy}
             r={NODE_RADIUS / 2}
@@ -283,7 +295,7 @@ function Graph({data, edgeProp, pointProp}) {
     }
 
     return (
-      <g class="edge" key={'edge' + index}>
+      <g className="edge" key={'edge' + index}>
         <line
           x1={center1.x}
           y1={center1.y}
@@ -303,14 +315,21 @@ function Graph({data, edgeProp, pointProp}) {
   const renderEdgePopup = edge => renderPopup(edge, edgeProps);
 
   function renderPoint(point) {
+    if (!point._placed) return;
+
     const {_center} = point;
     if (!_center) return null;
+
     return (
-      <g key={'circle' + point.id}>
+      <g
+        className={point === centerPoint ? 'center' : ''}
+        key={'circle' + point.id}
+      >
         <circle
           cx={_center.x}
           cy={_center.y}
           r={NODE_RADIUS}
+          onClick={() => setCenterPoint(point)}
           onMouseEnter={() => pointHover(point)}
           //onMouseLeave={() => setHoverPoint(null)}
         />
@@ -378,6 +397,10 @@ function Graph({data, edgeProp, pointProp}) {
         <button onClick={() => adjustZoom(1)}>
           <FontAwesomeIcon icon={faUndo} size="lg" />
         </button>
+        <button onClick={() => changeCenter()}>
+          <FontAwesomeIcon icon={faCrosshairs} size="lg" />
+        </button>
+        <p>{Date.now()}</p>
       </div>
       <div className="container">
         <svg
