@@ -84,6 +84,13 @@
     }
   }
 
+  .hstack {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  label,
   .label {
     font-weight: bold;
   }
@@ -109,12 +116,6 @@
     }
   }
 
-  .row {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-  }
-
   .select-wrapper {
     display: flex;
     flex-direction: column;
@@ -131,5 +132,13 @@
     font-size: 0.8rem;
     pointer-events: none;
     text-anchor: middle;
+  }
+
+  .vstack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    margin-top: 1rem;
   }
 }

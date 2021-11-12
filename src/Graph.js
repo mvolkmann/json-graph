@@ -26,12 +26,13 @@ const ZOOM_FACTOR = 0.1;
 
 function Graph({data, edgeProp, pointProp}) {
   console.log('Graph.js Graph: entered');
+  const [edgeColor, setEdgeColor] = useState('black');
   const {edges, points} = data;
   const [centerPoint, setCenterPoint] = useState(null);
   const [height, setHeight] = useState(0);
   const [hoverEdge, setHoverEdge] = useState(null);
   const [hoverPoint, setHoverPoint] = useState(null);
-  const [pointColor, setPointColor] = useState('orange');
+  const [pointColor, setPointColor] = useState('black');
   const [selectedEdgeProp, setSelectedEdgeProp] = useState(edgeProp);
   const [selectedPointProp, setSelectedPointProp] = useState(pointProp);
   const [viewBox, setViewBox] = useState('0 0 0 0');
@@ -41,14 +42,21 @@ function Graph({data, edgeProp, pointProp}) {
   const [, updateState] = React.useState();
   const forceUpdate = React.useCallback(() => updateState({}), []);
 
+  let graphRef2 = useRef(null);
+
   const graphRef = useCallback(element => {
     if (!element) return;
 
-    const style = getComputedStyle(element);
-    const w = parseInt(style.getPropertyValue('--width'));
+    graphRef2.current = element;
+
+    // Get the values of some CSS variables.
+    setPointColor(getCssVariable('--point-color'));
+    setEdgeColor(getCssVariable('--edge-color'));
+    const w = parseInt(getCssVariable('--width'));
     setWidth(w);
-    const h = parseInt(style.getPropertyValue('--height'));
+    const h = parseInt(getCssVariable('--height'));
     setHeight(h);
+
     setViewBox(`0 0 ${w} ${h}`);
 
     const centerPoint = points[0];
@@ -92,6 +100,11 @@ function Graph({data, edgeProp, pointProp}) {
     const dx = center1.x - center2.x;
     const dy = center1.y - center2.y;
     return Math.sqrt(dx ** 2 + dy ** 2);
+  }
+
+  function getCssVariable(name) {
+    const style = getComputedStyle(graphRef2.current);
+    return style.getPropertyValue(name).trim();
   }
 
   function getObjectProps(object) {
@@ -378,27 +391,9 @@ function Graph({data, edgeProp, pointProp}) {
     );
   }
 
-  function renderSelect(forPoints) {
-    const label = forPoints ? 'Point' : 'Edge';
-    const key = label + '-select';
-    const props = forPoints ? pointProps : edgeProps;
-    const selected = forPoints ? selectedPointProp : selectedEdgeProp;
-    const setSelected = forPoints ? setSelectedPointProp : setSelectedEdgeProp;
+  function renderRow1Controls() {
     return (
-      <div className="select-wrapper" key={key}>
-        <p className="label">{label} Property</p>
-        <select value={selected} onChange={e => setSelected(e.target.value)}>
-          {props.map(prop => (
-            <option key={prop}>{prop}</option>
-          ))}
-        </select>
-      </div>
-    );
-  }
-
-  return (
-    <div className="graph" ref={graphRef}>
-      <div className="row">
+      <div className="hstack">
         {renderSelect(true)}
         {renderSelect(false)}
         <button onClick={() => adjustZoom(zoom + ZOOM_FACTOR)}>
@@ -417,13 +412,68 @@ function Graph({data, edgeProp, pointProp}) {
           <FontAwesomeIcon icon={faSync} size="lg" />
         </button>
       </div>
-      <div className="row">
-        <input
-          type="color"
-          value={pointColor}
-          onChange={e => setPointColor(e.target.value)}
-        />
+    );
+  }
+
+  function renderRow2Controls() {
+    return (
+      <div className="hstack">
+        <div className="vstack">
+          <label htmlFor="point-color">Point Color</label>
+          <input
+            id="point-color"
+            type="color"
+            value={pointColor}
+            onChange={e => {
+              const color = e.target.value;
+              setPointColor(color);
+              setCssVariable('--point-color', color);
+            }}
+          />
+        </div>
+        <div className="vstack">
+          <label htmlFor="edge-color">Edge Color</label>
+          <input
+            id="edge-color"
+            type="color"
+            value={edgeColor}
+            onChange={e => {
+              const color = e.target.value;
+              setEdgeColor(color);
+              setCssVariable('--edge-color', color);
+            }}
+          />
+        </div>
       </div>
+    );
+  }
+
+  function renderSelect(forPoints) {
+    const label = forPoints ? 'Point' : 'Edge';
+    const key = label + '-select';
+    const props = forPoints ? pointProps : edgeProps;
+    const selected = forPoints ? selectedPointProp : selectedEdgeProp;
+    const setSelected = forPoints ? setSelectedPointProp : setSelectedEdgeProp;
+    return (
+      <div className="select-wrapper" key={key}>
+        <p className="label">{label} Property</p>
+        <select value={selected} onChange={e => setSelected(e.target.value)}>
+          {props.map(prop => (
+            <option key={prop}>{prop}</option>
+          ))}
+        </select>
+      </div>
+    );
+  }
+
+  function setCssVariable(name, value) {
+    graphRef2.current.style.setProperty(name, value);
+  }
+
+  return (
+    <div className="graph" ref={graphRef}>
+      {renderRow1Controls()}
+      {renderRow2Controls()}
       <div className="container">
         <svg
           xmlns="http://www.w3.org/2000/svg"
