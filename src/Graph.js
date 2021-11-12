@@ -10,8 +10,9 @@ import './Graph.scss';
 const ARROW_LENGTH = 10;
 const DELTA_ARC_LENGTH = 50;
 const DELTA_RADIUS = 100;
-const HIDDEN_PROPS = new Set(['center', 'id', 'placed', 'source', 'target']);
+const HIDDEN_PROPS = new Set(['_center', 'id', '_placed', 'source', 'target']);
 const NODE_RADIUS = 20;
+const NODE_DIAMETER = NODE_RADIUS * 2;
 const ZOOM_FACTOR = 0.1;
 
 function Graph({data, edgeProp, pointProp}) {
@@ -58,6 +59,14 @@ function Graph({data, edgeProp, pointProp}) {
     style.top = dy + 'px';
   }
 
+  function distanceBetweenPoints(point1, point2) {
+    const center1 = point1._center;
+    const center2 = point2._center;
+    const dx = center1.x - center2.x;
+    const dy = center1.y - center2.y;
+    return Math.sqrt(dx ** 2 + dy ** 2);
+  }
+
   function getObjectProps(object) {
     return Object.keys(object)
       .filter(key => !HIDDEN_PROPS.has(key))
@@ -102,23 +111,24 @@ function Graph({data, edgeProp, pointProp}) {
     // and have not been placed yet.
     return targetEdges
       .map(edge => pointMap[edge.target])
-      .filter(point => !point.placed);
+      .filter(point => !point._placed);
   }
 
   function layout(width, height) {
     // Place the first point in the center.
     const firstPoint = points[0];
-    firstPoint.center = {x: width / 2, y: height / 2};
-    firstPoint.placed = true;
+    firstPoint._center = {x: width / 2, y: height / 2};
+    firstPoint._layer = 0;
+    firstPoint._placed = true;
 
     placeTargetsRadially(width, height, firstPoint);
 
     for (const edge of edges) {
-      const p1 = pointMap[edge.source].center;
+      const p1 = pointMap[edge.source]._center;
       if (!p1) throw new Error('no center for point ' + edge.source);
-      const p2 = pointMap[edge.target].center;
+      const p2 = pointMap[edge.target]._center;
       if (!p2) throw new Error('no center for point ' + edge.target);
-      edge.center = {
+      edge._center = {
         x: (p1.x + p2.x) / 2,
         y: (p1.y + p2.y) / 2
       };
@@ -135,7 +145,7 @@ function Graph({data, edgeProp, pointProp}) {
     const arcAngle = arcLength / targetRadius;
     const deltaAngle = arcAngle / (count - 1);
 
-    const sourceCenter = sourcePoint.center;
+    const sourceCenter = sourcePoint._center;
     const graphCenter = {x: width / 2, y: height / 2};
     const sourceAngle = Math.atan2(
       sourceCenter.y - graphCenter.y,
@@ -144,11 +154,22 @@ function Graph({data, edgeProp, pointProp}) {
 
     let angle = sourceAngle - arcAngle / 2;
     for (const targetPoint of targetPoints) {
-      targetPoint.center = {
+      targetPoint._center = {
         x: graphCenter.x + Math.cos(angle) * targetRadius,
         y: graphCenter.y + Math.sin(angle) * targetRadius
       };
-      targetPoint.placed = true;
+      targetPoint._layer = layer;
+
+      if (pointOverlaps(targetPoint)) {
+        const newRadius = targetRadius + DELTA_RADIUS;
+        targetPoint._center = {
+          x: graphCenter.x + Math.cos(angle) * newRadius,
+          y: graphCenter.y + Math.sin(angle) * newRadius
+        };
+        targetPoint._layer++;
+      }
+
+      targetPoint._placed = true;
       angle += deltaAngle;
     }
 
@@ -164,14 +185,15 @@ function Graph({data, edgeProp, pointProp}) {
     // spreading these points around a circle.
     const deltaAngle = (2 * Math.PI) / targetPoints.length;
 
-    const {center} = sourcePoint;
+    const {_center} = sourcePoint;
     let angle = 0;
     for (const targetPoint of targetPoints) {
-      targetPoint.center = {
-        x: center.x + DELTA_RADIUS * Math.cos(angle),
-        y: center.y + DELTA_RADIUS * Math.sin(angle)
+      targetPoint._center = {
+        x: _center.x + DELTA_RADIUS * Math.cos(angle),
+        y: _center.y + DELTA_RADIUS * Math.sin(angle)
       };
-      targetPoint.placed = true;
+      targetPoint._layer = 1;
+      targetPoint._placed = true;
       angle += deltaAngle;
 
       placeTargets(width, height, targetPoint, 2);
@@ -182,13 +204,26 @@ function Graph({data, edgeProp, pointProp}) {
     setHoverPoint(point);
   }
 
+  function pointOverlaps(point) {
+    const {_layer} = point;
+    const pointsToCheck = Object.values(pointMap).filter(
+      p => p._layer >= _layer
+    );
+    return pointsToCheck.some(p => {
+      // Don't check a point against itself.
+      if (p.id === point.id) return false;
+
+      return distanceBetweenPoints(point, p) < NODE_DIAMETER;
+    });
+  }
+
   // For debugging ...
   //const radiansToDegrees = radians => (radians * 180) / (2 * Math.PI);
 
   function renderEdge(edge, index) {
     const {source, target} = edge;
-    const p1 = pointMap[source].center;
-    const p2 = pointMap[target].center;
+    const p1 = pointMap[source]._center;
+    const p2 = pointMap[target]._center;
     if (!p1 || !p2) return null;
 
     return (
@@ -202,25 +237,23 @@ function Graph({data, edgeProp, pointProp}) {
           onMouseLeave={() => setHoverEdge(null)}
         />
         <polygon className="arrow" points={getArrowPoints(p1, p2)} />
-        <text key={'text' + index} x={edge.center.x} y={edge.center.y}>
+        <text key={'text' + index} x={edge._center.x} y={edge._center.y}>
           {edge[selectedEdgeProp]}
         </text>
       </g>
     );
   }
 
-  function renderEdgePopup(edge) {
-    return renderPopup(edge, edgeProps);
-  }
+  const renderEdgePopup = edge => renderPopup(edge, edgeProps);
 
   function renderPoint(point) {
-    const {center} = point;
-    if (!center) return null;
+    const {_center} = point;
+    if (!_center) return null;
     return (
       <g key={'circle' + point.id}>
         <circle
-          cx={center.x}
-          cy={center.y}
+          cx={_center.x}
+          cy={_center.y}
           r={NODE_RADIUS}
           onMouseEnter={() => pointHover(point)}
           onMouseLeave={() => {
@@ -228,21 +261,18 @@ function Graph({data, edgeProp, pointProp}) {
             setHoverPoint(null);
           }}
         />
-        <text key={'text' + point.id} x={center.x} y={center.y}>
+        <text key={'text' + point.id} x={_center.x} y={_center.y}>
           {point[selectedPointProp]}
         </text>
       </g>
     );
   }
 
-  function renderPointPopup(point) {
-    console.log('Graph.js renderPointPopup: point =', point);
-    return renderPopup(point, pointProps);
-  }
+  const renderPointPopup = point => renderPopup(point, pointProps);
 
   function renderPopup(hoverObject, props) {
-    if (!hoverObject || !hoverObject.center) return null;
-    const {x, y} = hoverObject.center;
+    if (!hoverObject || !hoverObject._center) return null;
+    const {x, y} = hoverObject._center;
     const rowHeight = 15;
     return (
       <g className="popup">
