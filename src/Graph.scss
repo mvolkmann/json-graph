@@ -51,7 +51,7 @@
 
   line {
     stroke: var(--oci-light-blue);
-    stroke-width: 3px;
+    stroke-width: 4px;
   }
 
   line:hover {
@@ -59,6 +59,8 @@
   }
 
   .popup {
+    pointer-events: none;
+
     & > rect {
       fill: #cccccc90;
       stroke: gray;

@@ -243,7 +243,7 @@ function Graph({data, edgeProp, pointProp}) {
           x2={p2.x}
           y2={p2.y}
           onMouseEnter={() => edgeHover(edge)}
-          //   onMouseLeave={() => setHoverEdge(null)}
+          //onMouseLeave={() => setHoverEdge(null)}
         />
         <polygon className="arrow" points={getArrowPoints(p1, p2)} />
         <text key={'text' + index} x={edge._center.x} y={edge._center.y}>
@@ -265,10 +265,7 @@ function Graph({data, edgeProp, pointProp}) {
           cy={_center.y}
           r={NODE_RADIUS}
           onMouseEnter={() => pointHover(point)}
-          onMouseLeave={() => {
-            console.log('Graph.js renderPoint: got mouse leave');
-            // setHoverPoint(null);
-          }}
+          //onMouseLeave={() => setHoverPoint(null)}
         />
         <text key={'text' + point.id} x={_center.x} y={_center.y}>
           {point[selectedPointProp]}
