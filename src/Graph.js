@@ -31,6 +31,7 @@ function Graph({data, edgeProp, pointProp}) {
   const [height, setHeight] = useState(0);
   const [hoverEdge, setHoverEdge] = useState(null);
   const [hoverPoint, setHoverPoint] = useState(null);
+  const [pointColor, setPointColor] = useState('orange');
   const [selectedEdgeProp, setSelectedEdgeProp] = useState(edgeProp);
   const [selectedPointProp, setSelectedPointProp] = useState(pointProp);
   const [viewBox, setViewBox] = useState('0 0 0 0');
@@ -61,6 +62,7 @@ function Graph({data, edgeProp, pointProp}) {
   const edgeProps = getObjectProps(edges[0]);
   const pointProps = getObjectProps(points[0]);
   const pointMap = points.reduce((acc, point) => {
+    if (!point.id) point.id = point.name;
     acc[point.id] = point;
     return acc;
   }, {});
@@ -111,7 +113,7 @@ function Graph({data, edgeProp, pointProp}) {
     // and have not been placed yet.
     return targetEdges
       .map(edge => pointMap[edge.target])
-      .filter(point => !point._placed);
+      .filter(point => point && !point._placed);
   }
 
   function layout(width, height, centerPoint) {
@@ -123,12 +125,17 @@ function Graph({data, edgeProp, pointProp}) {
     placeTargetsRadially(width, height, centerPoint);
 
     for (const edge of edges) {
-      const p1 = pointMap[edge.source]._center;
-      const p2 = pointMap[edge.target]._center;
-      edge._center = {
-        x: (p1.x + p2.x) / 2,
-        y: (p1.y + p2.y) / 2
-      };
+      const p1 = pointMap[edge.source];
+      const p2 = pointMap[edge.target];
+      if (p1 && p2) {
+        const center1 = p1._center;
+        const center2 = p2._center;
+
+        edge._center = {
+          x: (center1.x + center2.x) / 2,
+          y: (center1.y + center2.y) / 2
+        };
+      }
     }
 
     // Clear this so the center point doesn't render as being selected.
@@ -409,6 +416,13 @@ function Graph({data, edgeProp, pointProp}) {
         <button onClick={() => changeCenter(points[0])}>
           <FontAwesomeIcon icon={faSync} size="lg" />
         </button>
+      </div>
+      <div className="row">
+        <input
+          type="color"
+          value={pointColor}
+          onChange={e => setPointColor(e.target.value)}
+        />
       </div>
       <div className="container">
         <svg

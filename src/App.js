@@ -1,6 +1,7 @@
 import Graph from './Graph';
 import './App.css';
 import data from './graph.json';
+//import data from './graph2.json';
 
 function App() {
   return (
