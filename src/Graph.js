@@ -153,6 +153,9 @@ function Graph({data, edgeProp, pointProp}) {
 
     // Clear this so the center point doesn't render as being selected.
     setCenterPoint(null);
+
+    setHoverPoint(null);
+    setHoverEdge(null);
   }
 
   function placeTargets(width, height, sourcePoint, layer) {
