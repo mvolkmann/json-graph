@@ -10,7 +10,14 @@ import './Graph.scss';
 const ARROW_LENGTH = 10;
 const DELTA_ARC_LENGTH = 50;
 const DELTA_RADIUS = 100;
-const HIDDEN_PROPS = new Set(['_center', 'id', '_placed', 'source', 'target']);
+const HIDDEN_PROPS = new Set([
+  '_center',
+  '_layer',
+  '_placed',
+  'id',
+  'source',
+  'target'
+]);
 const NODE_RADIUS = 20;
 const NODE_DIAMETER = NODE_RADIUS * 2;
 const ZOOM_FACTOR = 0.1;
@@ -74,6 +81,7 @@ function Graph({data, edgeProp, pointProp}) {
   }
 
   function edgeHover(edge) {
+    setHoverPoint(null);
     setHoverEdge(edge);
   }
 
@@ -201,6 +209,7 @@ function Graph({data, edgeProp, pointProp}) {
   }
 
   function pointHover(point) {
+    setHoverEdge(null);
     setHoverPoint(point);
   }
 
@@ -234,7 +243,7 @@ function Graph({data, edgeProp, pointProp}) {
           x2={p2.x}
           y2={p2.y}
           onMouseEnter={() => edgeHover(edge)}
-          onMouseLeave={() => setHoverEdge(null)}
+          //   onMouseLeave={() => setHoverEdge(null)}
         />
         <polygon className="arrow" points={getArrowPoints(p1, p2)} />
         <text key={'text' + index} x={edge._center.x} y={edge._center.y}>
@@ -258,7 +267,7 @@ function Graph({data, edgeProp, pointProp}) {
           onMouseEnter={() => pointHover(point)}
           onMouseLeave={() => {
             console.log('Graph.js renderPoint: got mouse leave');
-            setHoverPoint(null);
+            // setHoverPoint(null);
           }}
         />
         <text key={'text' + point.id} x={_center.x} y={_center.y}>
