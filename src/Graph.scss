@@ -7,12 +7,17 @@
   --oci-orange: #fbb573;
 
   --button-hover-color: lightgreen;
+  --center-color: #ddd;
   --edge-color: var(--oci-light-blue);
   --edge-width: 2;
   --hover-color: green;
   --point-color: var(--oci-orange);
   --point-width: 3;
   --text-color: var(--oci-dark-blue);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 
   .arrow {
     fill: var(--oci-light-blue);
@@ -31,14 +36,22 @@
     }
   }
 
+  .buttons {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
   .center {
     & > circle {
-      fill: var(--hover-color);
+      fill: var(--center-color);
     }
 
+    /*
     & > text {
-      stroke: white;
+      stroke: black;
     }
+    */
   }
 
   circle {
@@ -55,7 +68,7 @@
     height: var(--height);
     width: var(--width);
     margin-top: 1rem;
-    outline: 1px dashed red;
+    // outline: 1px dashed red;
     overflow: scroll;
     position: relative;
 
@@ -86,13 +99,20 @@
 
   .hstack {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 1rem;
+
+    margin-bottom: 1rem;
   }
 
-  label,
-  .label {
+  input,
+  select {
+    width: 100%;
+  }
+
+  label {
     font-weight: bold;
+    margin-top: 0;
   }
 
   line {
@@ -116,29 +136,22 @@
     }
   }
 
-  .select-wrapper {
-    display: flex;
-    flex-direction: column;
-
-    p {
-      margin-bottom: 0.5rem;
-      margin-top: 0;
-    }
-  }
-
   text {
     dominant-baseline: central;
     fill: var(--text-color);
     font-size: 0.8rem;
     pointer-events: none;
     text-anchor: middle;
+
+    -ms-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
   }
 
   .vstack {
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: 0.5rem;
-
-    margin-top: 1rem;
   }
 }

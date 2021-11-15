@@ -10,22 +10,23 @@ import {
 import './Graph.scss';
 
 const ARROW_LENGTH = 10;
-const DELTA_ARC_LENGTH = 50;
-const DELTA_RADIUS = 100;
+const NODE_RADIUS = 30;
+const DELTA_ARC_LENGTH = NODE_RADIUS * 2.5;
+const DELTA_RADIUS = 150;
 const HIDDEN_PROPS = new Set([
   '_center',
+  '_isCenter',
   '_layer',
   '_placed',
   'id',
   'source',
   'target'
 ]);
-const NODE_RADIUS = 20;
+const MAX_TEXT_LENGTH = 8;
 const NODE_DIAMETER = NODE_RADIUS * 2;
 const ZOOM_FACTOR = 0.1;
 
 function Graph({data, edgeProp, pointProp}) {
-  console.log('Graph.js Graph: entered');
   const [edgeColor, setEdgeColor] = useState('black');
   const {edges, points} = data;
   const [centerPoint, setCenterPoint] = useState(null);
@@ -35,6 +36,7 @@ function Graph({data, edgeProp, pointProp}) {
   const [pointColor, setPointColor] = useState('black');
   const [selectedEdgeProp, setSelectedEdgeProp] = useState(edgeProp);
   const [selectedPointProp, setSelectedPointProp] = useState(pointProp);
+  const [textColor, setTextColor] = useState('black');
   const [viewBox, setViewBox] = useState('0 0 0 0');
   const [width, setWidth] = useState(0);
   const [zoom, setZoom] = useState(1.0);
@@ -52,14 +54,14 @@ function Graph({data, edgeProp, pointProp}) {
     // Get the values of some CSS variables.
     setPointColor(getCssVariable('--point-color'));
     setEdgeColor(getCssVariable('--edge-color'));
+    setTextColor(getCssVariable('--text-color'));
     const w = parseInt(getCssVariable('--width'));
     setWidth(w);
     const h = parseInt(getCssVariable('--height'));
     setHeight(h);
 
-    setViewBox(`0 0 ${w} ${h}`);
-
     const centerPoint = points[0];
+    centerPoint._isCenter = true;
     setCenterPoint(centerPoint);
     layout(w, h, centerPoint);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -154,8 +156,17 @@ function Graph({data, edgeProp, pointProp}) {
     // Clear this so the center point doesn't render as being selected.
     setCenterPoint(null);
 
+    // Not hovering over anything yet.
     setHoverPoint(null);
     setHoverEdge(null);
+
+    updateViewBox();
+  }
+
+  function limitText(text) {
+    return text.length < MAX_TEXT_LENGTH
+      ? text
+      : text.substring(0, MAX_TEXT_LENGTH - 2) + '...';
   }
 
   function placeTargets(width, height, sourcePoint, layer) {
@@ -291,6 +302,55 @@ function Graph({data, edgeProp, pointProp}) {
     );
   }
 
+  function renderColorPicker(kind, value) {
+    const id = kind + '-color';
+    const capitalized = kind[0].toUpperCase() + kind.substring(1);
+    return (
+      <div className="vstack">
+        <label htmlFor={id}>{capitalized} Color</label>
+        <input
+          id={id}
+          type="color"
+          value={value}
+          onChange={e => {
+            const color = e.target.value;
+            setPointColor(color);
+            setCssVariable('--' + id, color);
+          }}
+        />
+      </div>
+    );
+  }
+
+  function renderControls() {
+    return (
+      <div className="controls hstack">
+        {renderSelect(true)}
+        {renderSelect(false)}
+        {renderColorPicker('point', pointColor)}
+        {renderColorPicker('edge', edgeColor)}
+        {renderColorPicker('text', textColor)}
+        <div className="buttons">
+          <button onClick={() => adjustZoom(zoom + ZOOM_FACTOR)}>
+            <FontAwesomeIcon icon={faSearchPlus} size="lg" />
+          </button>
+          <button onClick={() => adjustZoom(zoom - ZOOM_FACTOR)}>
+            <FontAwesomeIcon icon={faSearchMinus} size="lg" />
+          </button>
+          <button onClick={() => adjustZoom(1)}>
+            <FontAwesomeIcon icon={faUndo} size="lg" />
+          </button>
+          <button onClick={() => changeCenter()}>
+            <FontAwesomeIcon icon={faCrosshairs} size="lg" />
+          </button>
+          <button onClick={() => changeCenter(points[0])}>
+            <FontAwesomeIcon icon={faSync} size="lg" />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   function renderEdge(edge, index) {
     const {source, target} = edge;
     const p1 = pointMap[source];
@@ -343,27 +403,28 @@ function Graph({data, edgeProp, pointProp}) {
 
   const renderEdgePopup = edge => renderPopup(edge, edgeProps);
 
-  function renderPoint(point) {
+  function renderPoint(point, index) {
     if (!point._placed) return;
 
     const {_center} = point;
     if (!_center) return null;
 
     return (
-      <g
-        className={point === centerPoint ? 'center' : ''}
-        key={'circle' + point.id}
-      >
+      <g className={point._isCenter ? 'center' : ''} key={'circle' + point.id}>
         <circle
           cx={_center.x}
           cy={_center.y}
           r={NODE_RADIUS}
-          onClick={() => setCenterPoint(point)}
+          onClick={() => {
+            if (centerPoint) centerPoint._isCenter = false;
+            point._isCenter = true;
+            setCenterPoint(point);
+          }}
           onMouseEnter={() => pointHover(point)}
           //onMouseLeave={() => setHoverPoint(null)}
         />
         <text key={'text' + point.id} x={_center.x} y={_center.y}>
-          {point[selectedPointProp]}
+          {limitText(point[selectedPointProp])}
         </text>
       </g>
     );
@@ -394,63 +455,6 @@ function Graph({data, edgeProp, pointProp}) {
     );
   }
 
-  function renderRow1Controls() {
-    return (
-      <div className="hstack">
-        {renderSelect(true)}
-        {renderSelect(false)}
-        <button onClick={() => adjustZoom(zoom + ZOOM_FACTOR)}>
-          <FontAwesomeIcon icon={faSearchPlus} size="lg" />
-        </button>
-        <button onClick={() => adjustZoom(zoom - ZOOM_FACTOR)}>
-          <FontAwesomeIcon icon={faSearchMinus} size="lg" />
-        </button>
-        <button onClick={() => adjustZoom(1)}>
-          <FontAwesomeIcon icon={faUndo} size="lg" />
-        </button>
-        <button onClick={() => changeCenter()}>
-          <FontAwesomeIcon icon={faCrosshairs} size="lg" />
-        </button>
-        <button onClick={() => changeCenter(points[0])}>
-          <FontAwesomeIcon icon={faSync} size="lg" />
-        </button>
-      </div>
-    );
-  }
-
-  function renderRow2Controls() {
-    return (
-      <div className="hstack">
-        <div className="vstack">
-          <label htmlFor="point-color">Point Color</label>
-          <input
-            id="point-color"
-            type="color"
-            value={pointColor}
-            onChange={e => {
-              const color = e.target.value;
-              setPointColor(color);
-              setCssVariable('--point-color', color);
-            }}
-          />
-        </div>
-        <div className="vstack">
-          <label htmlFor="edge-color">Edge Color</label>
-          <input
-            id="edge-color"
-            type="color"
-            value={edgeColor}
-            onChange={e => {
-              const color = e.target.value;
-              setEdgeColor(color);
-              setCssVariable('--edge-color', color);
-            }}
-          />
-        </div>
-      </div>
-    );
-  }
-
   function renderSelect(forPoints) {
     const label = forPoints ? 'Point' : 'Edge';
     const key = label + '-select';
@@ -458,8 +462,8 @@ function Graph({data, edgeProp, pointProp}) {
     const selected = forPoints ? selectedPointProp : selectedEdgeProp;
     const setSelected = forPoints ? setSelectedPointProp : setSelectedEdgeProp;
     return (
-      <div className="select-wrapper" key={key}>
-        <p className="label">{label} Property</p>
+      <div className="vstack" key={key}>
+        <label>{label} Property</label>
         <select value={selected} onChange={e => setSelected(e.target.value)}>
           {props.map(prop => (
             <option key={prop}>{prop}</option>
@@ -473,10 +477,30 @@ function Graph({data, edgeProp, pointProp}) {
     graphRef2.current.style.setProperty(name, value);
   }
 
+  function updateViewBox() {
+    // Determine the required width and height
+    // to display all the points.
+    let maxX = 0;
+    let maxY = 0;
+    let minX = 0;
+    let minY = 0;
+    Object.values(pointMap).forEach(point => {
+      const {x, y} = point._center;
+      if (x > maxX) maxX = x;
+      if (x < minX) minX = x;
+      if (y > maxY) maxY = y;
+      if (y < minY) minY = y;
+    });
+    minX -= NODE_RADIUS;
+    maxX += NODE_RADIUS;
+    minY -= NODE_RADIUS;
+    maxY += NODE_RADIUS;
+    setViewBox(`${minX - 1} ${minY - 1} ${maxX - minX + 2} ${maxY - minY + 2}`);
+  }
+
   return (
     <div className="graph" ref={graphRef}>
-      {renderRow1Controls()}
-      {renderRow2Controls()}
+      {renderControls()}
       <div className="container">
         <svg
           xmlns="http://www.w3.org/2000/svg"
