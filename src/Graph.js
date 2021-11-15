@@ -1,4 +1,5 @@
-import React, {useCallback, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
+import {v4 as uuidV4} from 'uuid';
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
 import {
   faCrosshairs,
@@ -44,6 +45,8 @@ function Graph({data, edgeProp, pointProp}) {
   const [, updateState] = React.useState();
   const forceUpdate = React.useCallback(() => updateState({}), []);
 
+  let edgeMap = {};
+
   let graphRef2 = useRef(null);
 
   const graphRef = useCallback(element => {
@@ -77,6 +80,12 @@ function Graph({data, edgeProp, pointProp}) {
     return acc;
   }, {});
 
+  useEffect(() => {
+    setTimeout(() => {
+      console.log('Graph.js useEffect: edgeMap =', edgeMap);
+    }, 500);
+  }, []);
+
   function adjustZoom(newZoom) {
     setZoom(newZoom);
     const newWidth = width * newZoom;
@@ -89,6 +98,7 @@ function Graph({data, edgeProp, pointProp}) {
   }
 
   function changeCenter(point) {
+    console.log('Graph.js changeCenter: entered');
     // Allow all the points to be "placed" again.
     Object.values(pointMap).map(p => (p._placed = false));
 
@@ -129,6 +139,73 @@ function Graph({data, edgeProp, pointProp}) {
     return targetEdges
       .map(edge => pointMap[edge.target])
       .filter(point => point && !point._placed);
+  }
+
+  let dragging = false;
+  let lastX = 0;
+  let lastY = 0;
+
+  function handlePointerDown(event) {
+    lastX = event.clientX;
+    lastY = event.clientY;
+    dragging = true;
+
+    // Debugging
+    const pointId = event.target.id;
+    const edges = edgeMap[pointId];
+    console.log('edges from', pointId, 'are', edges);
+    for (const edge of edges) {
+      console.log('Graph.js x: line =', document.getElementById(edge));
+    }
+  }
+
+  function handlePointerMove(event, index) {
+    console.log('Graph.js handlePointerMove: dragging =', dragging);
+    if (dragging) {
+      const circle = event.target;
+      const pointId = circle.getAttribute('id');
+      console.log('Graph.js x: pointId =', pointId);
+      const cx = Number(circle.getAttribute('cx'));
+      //console.log('Graph.js x: cx =', cx);
+      const cy = Number(circle.getAttribute('cy'));
+      const newX = event.clientX;
+      //console.log('Graph.js x: newX =', newX);
+      //console.log('Graph.js x: lastX =', lastX);
+      const newY = event.clientY;
+      const dx = newX - lastX;
+      const dy = newY - lastY;
+      const newCx = cx + dx;
+      const newCy = cy + dy;
+      circle.setAttribute('cx', newCx);
+      circle.setAttribute('cy', newCy);
+
+      // Find all the connected edges and update their endpoints.
+      const edgeIds = edgeMap[circle.getAttribute('id')];
+      console.log('Graph.js x: edgeIds =', edgeIds);
+      /*
+      for (const edgeId of edgeIds) {
+        const line = document.getElementById(edgeId);
+        const startId = line.getAttribute('data-start-id');
+        const sourceEnd = startId === pointId;
+        const xAttr = sourceEnd ? 'x1' : 'x2';
+        const yAttr = sourceEnd ? 'y1' : 'y2';
+        const x = Number(line.getAttribute(xAttr));
+        const y = Number(line.getAttribute(yAttr));
+        line.setAttribute(xAttr, x + dx);
+        line.setAttribute(yAttr, y + dy);
+      }
+      */
+
+      lastX = newX;
+      lastY = newY;
+    } else {
+      console.log('Graph.js handlePointerMove: not dragging');
+    }
+  }
+
+  function handlePointerUp() {
+    console.log('Graph.js handlePointerUp: entered');
+    dragging = false;
   }
 
   function layout(width, height, centerPoint) {
@@ -383,9 +460,16 @@ function Graph({data, edgeProp, pointProp}) {
       );
     }
 
+    // Keep track of the edges that connect to each point.
+    const edgeId = 'edge-' + uuidV4();
+    trackEdge('point-' + source, edgeId);
+    trackEdge('point-' + target, edgeId);
+
     return (
-      <g className="edge" key={'edge' + index}>
+      <g className="edge" key={edgeId}>
         <line
+          id={edgeId}
+          data-start-id={source}
           x1={center1.x}
           y1={center1.y}
           x2={center2.x}
@@ -394,7 +478,7 @@ function Graph({data, edgeProp, pointProp}) {
           //onMouseLeave={() => setHoverEdge(null)}
         />
         {renderArrow(edge)}
-        <text key={'text' + index} x={edge._center.x} y={edge._center.y}>
+        <text x={edge._center.x} y={edge._center.y}>
           {edge[selectedEdgeProp]}
         </text>
       </g>
@@ -406,12 +490,13 @@ function Graph({data, edgeProp, pointProp}) {
   function renderPoint(point, index) {
     if (!point._placed) return;
 
-    const {_center} = point;
+    const {_center, id} = point;
     if (!_center) return null;
 
     return (
       <g className={point._isCenter ? 'center' : ''} key={'circle' + point.id}>
         <circle
+          id={'point-' + id}
           cx={_center.x}
           cy={_center.y}
           r={NODE_RADIUS}
@@ -422,6 +507,9 @@ function Graph({data, edgeProp, pointProp}) {
           }}
           onMouseEnter={() => pointHover(point)}
           //onMouseLeave={() => setHoverPoint(null)}
+          onPointerDown={handlePointerDown}
+          onPointerMove={e => handlePointerMove(e, point, index)}
+          onPointerUp={handlePointerUp}
         />
         <text key={'text' + point.id} x={_center.x} y={_center.y}>
           {limitText(point[selectedPointProp])}
@@ -441,7 +529,7 @@ function Graph({data, edgeProp, pointProp}) {
         <rect
           x={x}
           y={y}
-          width="80"
+          width="100"
           height={(props.length + 0.5) * rowHeight}
         />
         <text x={x} y={y}>
@@ -477,6 +565,14 @@ function Graph({data, edgeProp, pointProp}) {
     graphRef2.current.style.setProperty(name, value);
   }
 
+  function trackEdge(pointId, edgeId) {
+    console.log('Graph.js trackEdge: pointId =', pointId);
+    console.log('Graph.js trackEdge: edgeId =', edgeId);
+    let list = edgeMap[pointId];
+    if (!list) list = edgeMap[pointId] = [];
+    list.push(edgeId);
+  }
+
   function updateViewBox() {
     // Determine the required width and height
     // to display all the points.
@@ -498,6 +594,7 @@ function Graph({data, edgeProp, pointProp}) {
     setViewBox(`${minX - 1} ${minY - 1} ${maxX - minX + 2} ${maxY - minY + 2}`);
   }
 
+  console.log('Graph.js: RENDERING AGAIN!');
   return (
     <div className="graph" ref={graphRef}>
       {renderControls()}

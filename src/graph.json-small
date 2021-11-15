@@ -1,0 +1,36 @@
+{
+  "points": [
+    {
+      "id": 1,
+      "name": "pt1",
+      "color": "red",
+      "size": 10
+    },
+    {
+      "id": 2,
+      "name": "pt2",
+      "color": "green",
+      "size": 20
+    },
+    {
+      "id": 3,
+      "name": "pt3",
+      "color": "blue",
+      "size": 30
+    }
+  ],
+  "edges": [
+    {
+      "source": 1,
+      "target": 2,
+      "count": 3,
+      "time": 30
+    },
+    {
+      "source": 1,
+      "target": 3,
+      "count": 4,
+      "time": 31
+    }
+  ]
+}
