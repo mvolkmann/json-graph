@@ -8,9 +8,9 @@ import {
   faUndo
 } from '@fortawesome/free-solid-svg-icons';
 
-import Point from './Point';
-import Edge from './Edge';
-import ColorPicker from './ColorPicker';
+import Point from './Point.jsx';
+import Edge from './Edge.jsx';
+import ColorPicker from './ColorPicker.jsx';
 import {
   distanceBetweenPoints,
   getCssVariable,

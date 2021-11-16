@@ -1,4 +1,4 @@
-import Graph from './Graph';
+import Graph from './Graph.jsx';
 import './App.css';
 import data from './graph.json';
 //import data from './graph2.json';
