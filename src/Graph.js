@@ -1,5 +1,4 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {v4 as uuidV4} from 'uuid';
+import React, {useCallback, useRef, useState} from 'react';
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
 import {
   faCrosshairs,
@@ -8,23 +7,23 @@ import {
   faSync,
   faUndo
 } from '@fortawesome/free-solid-svg-icons';
+
+import Point from './Point';
+import Edge from './Edge';
+import ColorPicker from './ColorPicker';
+import {
+  distanceBetweenPoints,
+  getCssVariable,
+  getObjectProps,
+  setCssVariable
+} from './util';
+
 import './Graph.scss';
 
-const ARROW_LENGTH = 10;
 const NODE_RADIUS = 30;
+const NODE_DIAMETER = NODE_RADIUS * 2;
 const DELTA_ARC_LENGTH = NODE_RADIUS * 2.5;
 const DELTA_RADIUS = 150;
-const HIDDEN_PROPS = new Set([
-  '_center',
-  '_isCenter',
-  '_layer',
-  '_placed',
-  'id',
-  'source',
-  'target'
-]);
-const MAX_TEXT_LENGTH = 8;
-const NODE_DIAMETER = NODE_RADIUS * 2;
 const ZOOM_FACTOR = 0.1;
 
 function Graph({data, edgeProp, pointProp}) {
@@ -32,10 +31,10 @@ function Graph({data, edgeProp, pointProp}) {
   const {edges, points} = data;
   const [centerPoint, setCenterPoint] = useState(null);
   const [height, setHeight] = useState(0);
-  const [hoverEdge, setHoverEdge] = useState(null);
-  const [hoverPoint, setHoverPoint] = useState(null);
+  const [hover, setHover] = useState(null);
   const [pointColor, setPointColor] = useState('black');
   const [selectedEdgeProp, setSelectedEdgeProp] = useState(edgeProp);
+  const [selectedPoint, setSelectedPoint] = useState(null);
   const [selectedPointProp, setSelectedPointProp] = useState(pointProp);
   const [textColor, setTextColor] = useState('black');
   const [viewBox, setViewBox] = useState('0 0 0 0');
@@ -55,12 +54,12 @@ function Graph({data, edgeProp, pointProp}) {
     graphRef2.current = element;
 
     // Get the values of some CSS variables.
-    setPointColor(getCssVariable('--point-color'));
-    setEdgeColor(getCssVariable('--edge-color'));
-    setTextColor(getCssVariable('--text-color'));
-    const w = parseInt(getCssVariable('--width'));
+    setPointColor(getCssVariable(graphRef2, '--point-color'));
+    setEdgeColor(getCssVariable(graphRef2, '--edge-color'));
+    setTextColor(getCssVariable(graphRef2, '--text-color'));
+    const w = parseInt(getCssVariable(graphRef2, '--width'));
     setWidth(w);
-    const h = parseInt(getCssVariable('--height'));
+    const h = parseInt(getCssVariable(graphRef2, '--height'));
     setHeight(h);
 
     const centerPoint = points[0];
@@ -80,13 +79,20 @@ function Graph({data, edgeProp, pointProp}) {
     return acc;
   }, {});
 
-  useEffect(() => {
-    setTimeout(() => {
-      console.log('Graph.js useEffect: edgeMap =', edgeMap);
-    }, 500);
-  }, []);
+  function changeCenter(point) {
+    if (centerPoint) centerPoint._isCenter = false;
+    point._isCenter = true;
+    setCenterPoint(point);
+    setSelectedPoint(null);
 
-  function adjustZoom(newZoom) {
+    // Allow all the points to be "placed" again.
+    Object.values(pointMap).map(p => (p._placed = false));
+
+    layout(width, height, point || centerPoint);
+    forceUpdate();
+  }
+
+  function changeZoom(newZoom) {
     setZoom(newZoom);
     const newWidth = width * newZoom;
     const newHeight = height * newZoom;
@@ -95,39 +101,6 @@ function Graph({data, edgeProp, pointProp}) {
     const {style} = svgRef.current;
     style.left = dx + 'px';
     style.top = dy + 'px';
-  }
-
-  function changeCenter(point) {
-    console.log('Graph.js changeCenter: entered');
-    // Allow all the points to be "placed" again.
-    Object.values(pointMap).map(p => (p._placed = false));
-
-    layout(width, height, point || centerPoint);
-    forceUpdate();
-  }
-
-  function distanceBetweenPoints(point1, point2) {
-    const center1 = point1._center;
-    const center2 = point2._center;
-    const dx = center1.x - center2.x;
-    const dy = center1.y - center2.y;
-    return Math.sqrt(dx ** 2 + dy ** 2);
-  }
-
-  function getCssVariable(name) {
-    const style = getComputedStyle(graphRef2.current);
-    return style.getPropertyValue(name).trim();
-  }
-
-  function getObjectProps(object) {
-    return Object.keys(object)
-      .filter(key => !HIDDEN_PROPS.has(key))
-      .sort();
-  }
-
-  function edgeHover(edge) {
-    setHoverPoint(null);
-    setHoverEdge(edge);
   }
 
   function getTargetPoints(point) {
@@ -139,73 +112,6 @@ function Graph({data, edgeProp, pointProp}) {
     return targetEdges
       .map(edge => pointMap[edge.target])
       .filter(point => point && !point._placed);
-  }
-
-  let dragging = false;
-  let lastX = 0;
-  let lastY = 0;
-
-  function handlePointerDown(event) {
-    lastX = event.clientX;
-    lastY = event.clientY;
-    dragging = true;
-
-    // Debugging
-    const pointId = event.target.id;
-    const edges = edgeMap[pointId];
-    console.log('edges from', pointId, 'are', edges);
-    for (const edge of edges) {
-      console.log('Graph.js x: line =', document.getElementById(edge));
-    }
-  }
-
-  function handlePointerMove(event, index) {
-    console.log('Graph.js handlePointerMove: dragging =', dragging);
-    if (dragging) {
-      const circle = event.target;
-      const pointId = circle.getAttribute('id');
-      console.log('Graph.js x: pointId =', pointId);
-      const cx = Number(circle.getAttribute('cx'));
-      //console.log('Graph.js x: cx =', cx);
-      const cy = Number(circle.getAttribute('cy'));
-      const newX = event.clientX;
-      //console.log('Graph.js x: newX =', newX);
-      //console.log('Graph.js x: lastX =', lastX);
-      const newY = event.clientY;
-      const dx = newX - lastX;
-      const dy = newY - lastY;
-      const newCx = cx + dx;
-      const newCy = cy + dy;
-      circle.setAttribute('cx', newCx);
-      circle.setAttribute('cy', newCy);
-
-      // Find all the connected edges and update their endpoints.
-      const edgeIds = edgeMap[circle.getAttribute('id')];
-      console.log('Graph.js x: edgeIds =', edgeIds);
-      /*
-      for (const edgeId of edgeIds) {
-        const line = document.getElementById(edgeId);
-        const startId = line.getAttribute('data-start-id');
-        const sourceEnd = startId === pointId;
-        const xAttr = sourceEnd ? 'x1' : 'x2';
-        const yAttr = sourceEnd ? 'y1' : 'y2';
-        const x = Number(line.getAttribute(xAttr));
-        const y = Number(line.getAttribute(yAttr));
-        line.setAttribute(xAttr, x + dx);
-        line.setAttribute(yAttr, y + dy);
-      }
-      */
-
-      lastX = newX;
-      lastY = newY;
-    } else {
-      console.log('Graph.js handlePointerMove: not dragging');
-    }
-  }
-
-  function handlePointerUp() {
-    console.log('Graph.js handlePointerUp: entered');
-    dragging = false;
   }
 
   function layout(width, height, centerPoint) {
@@ -234,16 +140,9 @@ function Graph({data, edgeProp, pointProp}) {
     setCenterPoint(null);
 
     // Not hovering over anything yet.
-    setHoverPoint(null);
-    setHoverEdge(null);
+    setHover(null);
 
     updateViewBox();
-  }
-
-  function limitText(text) {
-    return text.length < MAX_TEXT_LENGTH
-      ? text
-      : text.substring(0, MAX_TEXT_LENGTH - 2) + '...';
   }
 
   function placeTargets(width, height, sourcePoint, layer) {
@@ -312,11 +211,6 @@ function Graph({data, edgeProp, pointProp}) {
     }
   }
 
-  function pointHover(point) {
-    setHoverEdge(null);
-    setHoverPoint(point);
-  }
-
   function pointOverlaps(point) {
     const {_layer} = point;
     const pointsToCheck = Object.values(pointMap).filter(
@@ -330,73 +224,8 @@ function Graph({data, edgeProp, pointProp}) {
     });
   }
 
-  // For debugging ...
-  //const radiansToDegrees = radians => (radians * 180) / (2 * Math.PI);
-
-  function renderArrow(edge) {
-    const {source, target} = edge;
-    const p1 = pointMap[source];
-    const p2 = pointMap[target];
-    const center1 = p1._center;
-    const center2 = p2._center;
-    if (!center1 || !center2) return null;
-
-    const angle = Math.atan2(center2.y - center1.y, center2.x - center1.x);
-    const complementaryAngle = Math.PI - angle;
-
-    const tip = {
-      x: center2.x + NODE_RADIUS * Math.cos(complementaryAngle),
-      y: center2.y - NODE_RADIUS * Math.sin(complementaryAngle)
-    };
-
-    return renderArrow2(edge, angle, tip);
-  }
-
-  function renderArrow2(edge, angle, tip) {
-    const complementaryAngle = Math.PI - angle;
-
-    // Find the middle of the arrow base.
-    const middle = {
-      x: tip.x + ARROW_LENGTH * Math.cos(complementaryAngle),
-      y: tip.y - ARROW_LENGTH * Math.sin(complementaryAngle)
-    };
-
-    const dx = (Math.sin(angle) * ARROW_LENGTH) / 2;
-    const dy = (Math.cos(angle) * ARROW_LENGTH) / 2;
-    const arrowLeft = {x: middle.x - dx, y: middle.y + dy};
-    const arrowRight = {x: middle.x + dx, y: middle.y - dy};
-
-    const points =
-      `${tip.x},${tip.y} ` +
-      `${arrowLeft.x},${arrowLeft.y} ` +
-      `${arrowRight.x},${arrowRight.y}`;
-    return (
-      <polygon
-        className="arrow"
-        points={points}
-        onMouseEnter={() => edgeHover(edge)}
-      />
-    );
-  }
-
-  function renderColorPicker(kind, value) {
-    const id = kind + '-color';
-    const capitalized = kind[0].toUpperCase() + kind.substring(1);
-    return (
-      <div className="vstack">
-        <label htmlFor={id}>{capitalized} Color</label>
-        <input
-          id={id}
-          type="color"
-          value={value}
-          onChange={e => {
-            const color = e.target.value;
-            setPointColor(color);
-            setCssVariable('--' + id, color);
-          }}
-        />
-      </div>
-    );
+  function setColor(kind, color) {
+    setCssVariable(graphRef2, '--' + kind + '-color', color);
   }
 
   function renderControls() {
@@ -404,20 +233,20 @@ function Graph({data, edgeProp, pointProp}) {
       <div className="controls hstack">
         {renderSelect(true)}
         {renderSelect(false)}
-        {renderColorPicker('point', pointColor)}
-        {renderColorPicker('edge', edgeColor)}
-        {renderColorPicker('text', textColor)}
+        <ColorPicker kind="point" setColor={setColor} value={pointColor} />
+        <ColorPicker kind="edge" setColor={setColor} value={edgeColor} />
+        <ColorPicker kind="text" setColor={setColor} value={textColor} />
         <div className="buttons">
-          <button onClick={() => adjustZoom(zoom + ZOOM_FACTOR)}>
+          <button onClick={() => changeZoom(zoom + ZOOM_FACTOR)}>
             <FontAwesomeIcon icon={faSearchPlus} size="lg" />
           </button>
-          <button onClick={() => adjustZoom(zoom - ZOOM_FACTOR)}>
+          <button onClick={() => changeZoom(zoom - ZOOM_FACTOR)}>
             <FontAwesomeIcon icon={faSearchMinus} size="lg" />
           </button>
-          <button onClick={() => adjustZoom(1)}>
+          <button onClick={() => changeZoom(1)}>
             <FontAwesomeIcon icon={faUndo} size="lg" />
           </button>
-          <button onClick={() => changeCenter()}>
+          <button onClick={() => changeCenter(selectedPoint)}>
             <FontAwesomeIcon icon={faCrosshairs} size="lg" />
           </button>
           <button onClick={() => changeCenter(points[0])}>
@@ -428,101 +257,11 @@ function Graph({data, edgeProp, pointProp}) {
     );
   }
 
-  function renderEdge(edge, index) {
-    const {source, target} = edge;
-    const p1 = pointMap[source];
-    const p2 = pointMap[target];
-    if (!p1 || !p2) return null;
-    if (!p1._placed || !p2._placed) return null;
+  function renderPopup(hover) {
+    if (!hover || !hover._center) return null;
 
-    const center1 = p1._center;
-    const center2 = p2._center;
-    if (!center1 || !center2) return null;
-
-    if (p1 === p2) {
-      const cx = center1.x - NODE_RADIUS * 0.75;
-      const cy = center1.y - NODE_RADIUS * 0.75;
-      return (
-        <g className="edge" key={'self' + p1.id}>
-          <circle
-            className="cycle"
-            cx={cx}
-            cy={cy}
-            r={NODE_RADIUS / 2}
-            onMouseEnter={() => edgeHover(edge)}
-          />
-          {/* The numbers here were arrived at by trial and error. */}
-          {renderArrow2(edge, 0.65, {
-            x: cx + NODE_RADIUS * 0.48,
-            y: cy - NODE_RADIUS * 0.25
-          })}
-        </g>
-      );
-    }
-
-    // Keep track of the edges that connect to each point.
-    const edgeId = 'edge-' + uuidV4();
-    trackEdge('point-' + source, edgeId);
-    trackEdge('point-' + target, edgeId);
-
-    return (
-      <g className="edge" key={edgeId}>
-        <line
-          id={edgeId}
-          data-start-id={source}
-          x1={center1.x}
-          y1={center1.y}
-          x2={center2.x}
-          y2={center2.y}
-          onMouseEnter={() => edgeHover(edge)}
-          //onMouseLeave={() => setHoverEdge(null)}
-        />
-        {renderArrow(edge)}
-        <text x={edge._center.x} y={edge._center.y}>
-          {edge[selectedEdgeProp]}
-        </text>
-      </g>
-    );
-  }
-
-  const renderEdgePopup = edge => renderPopup(edge, edgeProps);
-
-  function renderPoint(point, index) {
-    if (!point._placed) return;
-
-    const {_center, id} = point;
-    if (!_center) return null;
-
-    return (
-      <g className={point._isCenter ? 'center' : ''} key={'circle' + point.id}>
-        <circle
-          id={'point-' + id}
-          cx={_center.x}
-          cy={_center.y}
-          r={NODE_RADIUS}
-          onClick={() => {
-            if (centerPoint) centerPoint._isCenter = false;
-            point._isCenter = true;
-            setCenterPoint(point);
-          }}
-          onMouseEnter={() => pointHover(point)}
-          //onMouseLeave={() => setHoverPoint(null)}
-          onPointerDown={handlePointerDown}
-          onPointerMove={e => handlePointerMove(e, point, index)}
-          onPointerUp={handlePointerUp}
-        />
-        <text key={'text' + point.id} x={_center.x} y={_center.y}>
-          {limitText(point[selectedPointProp])}
-        </text>
-      </g>
-    );
-  }
-
-  const renderPointPopup = point => renderPopup(point, pointProps);
-
-  function renderPopup(hoverObject, props) {
-    if (!hoverObject || !hoverObject._center) return null;
-    const {x, y} = hoverObject._center;
+    const props = getObjectProps(hover);
+    const {x, y} = hover._center;
     const rowHeight = 15;
     return (
       <g className="popup">
@@ -535,7 +274,7 @@ function Graph({data, edgeProp, pointProp}) {
         <text x={x} y={y}>
           {props.map((prop, index) => (
             <tspan key={prop} x={x + 5} y={y + (index + 1) * rowHeight}>
-              {prop}: {hoverObject[prop]}
+              {prop}: {hover[prop]}
             </tspan>
           ))}
         </text>
@@ -559,10 +298,6 @@ function Graph({data, edgeProp, pointProp}) {
         </select>
       </div>
     );
-  }
-
-  function setCssVariable(name, value) {
-    graphRef2.current.style.setProperty(name, value);
   }
 
   function trackEdge(pointId, edgeId) {
@@ -605,10 +340,28 @@ function Graph({data, edgeProp, pointProp}) {
           viewBox={viewBox}
           style={{width: width * zoom + 'px', height: height * zoom + 'px'}}
         >
-          {edges.map(renderEdge)}
-          {points.map(renderPoint)}
-          {renderPointPopup(hoverPoint)}
-          {renderEdgePopup(hoverEdge)}
+          {edges.map(edge => (
+            <Edge
+              edge={edge}
+              edgeMap={edgeMap}
+              hover={setHover}
+              pointMap={pointMap}
+              prop={selectedPointProp}
+              radius={NODE_RADIUS}
+            />
+          ))}
+          {points.map(point => (
+            <Point
+              edgeMap={edgeMap}
+              hover={setHover}
+              isSelected={point === selectedPoint}
+              point={point}
+              prop={selectedPointProp}
+              radius={NODE_RADIUS}
+              select={setSelectedPoint}
+            />
+          ))}
+          {renderPopup(hover)}
         </svg>
       </div>
     </div>

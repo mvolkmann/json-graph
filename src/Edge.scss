@@ -1,0 +1,32 @@
+.edge {
+  .arrow {
+    fill: var(--oci-light-blue);
+  }
+
+  circle {
+    fill: transparent;
+  }
+
+  .cycle {
+    stroke: var(--edge-color);
+    stroke-width: var(--edge-width);
+  }
+
+  &:hover {
+    pointer-events: bounding-box;
+
+    & > circle,
+    & > line {
+      stroke: var(--hover-color);
+    }
+
+    & > polygon {
+      fill: var(--hover-color);
+    }
+  }
+
+  line {
+    stroke: var(--edge-color);
+    stroke-width: var(--edge-width);
+  }
+}

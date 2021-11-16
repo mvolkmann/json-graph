@@ -19,10 +19,6 @@
   flex-direction: column;
   align-items: center;
 
-  .arrow {
-    fill: var(--oci-light-blue);
-  }
-
   button {
     --size: 2.5rem;
     background-color: lightgray;
@@ -42,58 +38,15 @@
     margin-top: 0.5rem;
   }
 
-  .center {
-    & > circle {
-      fill: var(--center-color);
-    }
-
-    /*
-    & > text {
-      stroke: black;
-    }
-    */
-  }
-
-  circle {
-    fill: white;
-    stroke: var(--point-color);
-    stroke-width: var(--point-width);
-  }
-
-  circle:hover {
-    stroke: var(--hover-color);
-  }
-
   .container {
     height: var(--height);
     width: var(--width);
     margin-top: 1rem;
-    // outline: 1px dashed red;
     overflow: scroll;
     position: relative;
 
     & > svg {
       position: absolute;
-    }
-  }
-
-  .cycle {
-    stroke: var(--edge-color);
-    stroke-width: var(--edge-width);
-  }
-
-  .edge:hover {
-    pointer-events: bounding-box;
-
-    & > circle,
-    & > line {
-      stroke: var(--hover-color);
-      //   stroke: inherit;
-    }
-
-    & > polygon {
-      fill: var(--hover-color);
-      //   fill: inherit;
     }
   }
 
@@ -113,11 +66,6 @@
   label {
     font-weight: bold;
     margin-top: 0;
-  }
-
-  line {
-    stroke: var(--edge-color);
-    stroke-width: var(--edge-width);
   }
 
   .popup {
