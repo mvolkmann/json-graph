@@ -90,6 +90,7 @@ function Edge({edge, edgeMap, hover, pointMap, prop, radius}) {
   function renderText() {
     const x = (center1.x + center2.x) / 2;
     const y = (center1.y + center2.y) / 2;
+    edge._center = {x, y};
     return (
       <text x={x} y={y}>
         {edge[prop]}
