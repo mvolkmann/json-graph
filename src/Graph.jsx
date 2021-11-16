@@ -343,10 +343,9 @@ function Graph({data, edgeProp, pointProp}) {
           {edges.map(edge => (
             <Edge
               edge={edge}
-              edgeMap={edgeMap}
               hover={setHover}
               pointMap={pointMap}
-              prop={selectedPointProp}
+              prop={selectedEdgeProp}
               radius={NODE_RADIUS}
             />
           ))}

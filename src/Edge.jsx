@@ -4,7 +4,7 @@ import './Edge.scss';
 
 const ARROW_LENGTH = 10;
 
-function Edge({edge, edgeMap, hover, pointMap, prop, radius}) {
+function Edge({edge, hover, pointMap, prop, radius}) {
   const {source, target} = edge;
   const p1 = pointMap[source];
   const p2 = pointMap[target];
