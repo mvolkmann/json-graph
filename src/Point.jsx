@@ -52,53 +52,21 @@ function Point({
 
       point._center = {x: newCx, y: newCy};
 
-      /*
-      // Find all the connected edges and update their endpoints.
+      // Remove all the connected edges.
+      // These will be redrawn after the drag ends.
       const edgeIds = edgeMap[point.id];
-      console.log('Point.jsx x: edgeIds =', edgeIds);
       for (const edgeId of edgeIds) {
         const group = document.getElementById(edgeId);
         if (!group) continue;
 
         const line = group.querySelector('line');
         if (line) {
-          // non-cycle edge
-          // Get the endpoints of the line
-          let x1 = Number(line.getAttribute('x1'));
-          let y1 = Number(line.getAttribute('y1'));
-          let x2 = Number(line.getAttribute('x2'));
-          let y2 = Number(line.getAttribute('y2'));
-
-          // Move one of the line endpoints for the edge.
-          const startId = line.getAttribute('data-start-id');
-          const sourceEnd = startId === String(point.id);
-          if (sourceEnd) {
-            x1 += dx;
-            y1 += dy;
-            line.setAttribute('x1', x1);
-            line.setAttribute('y1', y1);
-          } else {
-            x2 += dx;
-            y2 += dy;
-            line.setAttribute('x2', x2);
-            line.setAttribute('y2', y2);
-          }
-
-          // Move the edge text.
-          const text = group.querySelector('text');
-          const textX = (x1 + x2) / 2;
-          const textY = (y1 + y2) / 2;
-          text.setAttribute('x', textX);
-          text.setAttribute('y', textY);
+          hide(line);
+          hide(group.querySelector('text'));
         } else {
-          const circle = group.querySelector('circle');
-          console.log('Point.jsx x: circle =', circle);
-          if (circle) {
-            // cycle edge
-          }
+          hide(group.querySelector('circle'));
         }
       }
-      */
 
       lastX = newX;
       lastY = newY;
@@ -108,6 +76,12 @@ function Point({
   function handlePointerUp() {
     dragging = false;
     dragged();
+  }
+
+  function hide(element) {
+    if (!element) return;
+    //element.parentElement.removeChild(element);
+    //element.style.display = 'none';
   }
 
   return (
