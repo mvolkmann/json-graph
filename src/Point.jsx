@@ -24,6 +24,7 @@ function Point({
 
   function handlePointerDown(event) {
     dragging = true;
+    setEdgeOpacities(0);
   }
 
   function handlePointerMove(event) {
@@ -49,35 +50,21 @@ function Point({
 
       // Update the point location.
       point._center = {x: svgPoint.x, y: svgPoint.y};
-
-      /* Why aren't these redrawn when the drag ends?
-      // Remove all the connected edges.
-      // These will be redrawn after the drag ends.
-      const edgeIds = edgeMap[point.id];
-      for (const edgeId of edgeIds) {
-        const group = document.getElementById(edgeId);
-        if (!group) continue;
-
-        const line = group.querySelector('line');
-        if (line) {
-          hide(line);
-          hide(group.querySelector('text'));
-        } else {
-          hide(group.querySelector('circle'));
-        }
-      }
-      */
     }
   }
 
   function handlePointerUp() {
     dragging = false;
     dragged();
+    setEdgeOpacities(1);
   }
 
-  function hide(element) {
-    if (element) element.parentElement.removeChild(element);
-    //if (element) element.style.display = 'none';
+  function setEdgeOpacities(opacity) {
+    const edgeIds = edgeMap[point.id];
+    for (const edgeId of edgeIds) {
+      const group = document.getElementById(edgeId);
+      if (group) group.style.opacity = opacity;
+    }
   }
 
   return (

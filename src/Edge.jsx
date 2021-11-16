@@ -23,7 +23,7 @@ function Edge({edge, edgeMap, hover, pointMap, prop, radius}) {
     const cx = center1.x - radius * 0.75;
     const cy = center1.y - radius * 0.75;
     return (
-      <g className="edge">
+      <g className="edge" id={edgeId}>
         <circle
           className="cycle"
           cx={cx}
