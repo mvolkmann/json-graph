@@ -11,12 +11,9 @@ import {
 import Point from './Point.jsx';
 import Edge from './Edge.jsx';
 import ColorPicker from './ColorPicker.jsx';
-import {
-  distanceBetweenPoints,
-  getCssVariable,
-  getObjectProps,
-  setCssVariable
-} from './util';
+import {getCssVariable, setCssVariable} from './utilities/css';
+import {distanceBetweenPoints} from './utilities/math';
+import {getObjectProps} from './utilities/object';
 
 import './Graph.scss';
 

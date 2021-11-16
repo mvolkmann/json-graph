@@ -1,5 +1,5 @@
 import React from 'react';
-import {limitText} from './util';
+import {limitText} from './utilities/string';
 import './Point.scss';
 
 function Point({edgeMap, hover, isSelected, point, prop, radius, select}) {
