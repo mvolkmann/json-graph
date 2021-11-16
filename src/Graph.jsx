@@ -110,7 +110,6 @@ function Graph({data, edgeProp, pointProp}) {
   }
 
   function layout(width, height, centerPoint) {
-    console.log('Graph.jsx layout: entered');
     // Place the first point in the center.
     centerPoint._center = {x: width / 2, y: height / 2};
     centerPoint._layer = 0;
@@ -317,7 +316,6 @@ function Graph({data, edgeProp, pointProp}) {
     setViewBox(`${minX - 1} ${minY - 1} ${maxX - minX + 2} ${maxY - minY + 2}`);
   }
 
-  console.log('Graph.js: RENDERING AGAIN!');
   const edgeMap = {};
   return (
     <div className="graph" ref={graphRef}>

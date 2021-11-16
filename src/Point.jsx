@@ -17,41 +17,40 @@ function Point({
   if (!_center) return null;
 
   let dragging = false;
-  let lastX = 0;
-  let lastY = 0;
 
   const classes = ['point'];
   if (isSelected) classes.push('selected');
   if (point._isCenter) classes.push('center');
 
   function handlePointerDown(event) {
-    lastX = event.clientX;
-    lastY = event.clientY;
     dragging = true;
   }
 
   function handlePointerMove(event) {
     if (dragging) {
+      // Get the location of the mouse cursor in SVG coordinates.
+      var svg = event.target.parentElement.parentElement;
+      var screenPoint = svg.createSVGPoint();
+      screenPoint.x = event.clientX;
+      screenPoint.y = event.clientY;
+      const svgPoint = screenPoint.matrixTransform(
+        svg.getScreenCTM().inverse()
+      );
+
       // Move the circle for the point.
       const circle = event.target;
-      const cx = Number(circle.getAttribute('cx'));
-      const cy = Number(circle.getAttribute('cy'));
-      const newX = event.clientX;
-      const newY = event.clientY;
-      const dx = newX - lastX;
-      const dy = newY - lastY;
-      const newCx = cx + dx;
-      const newCy = cy + dy;
-      circle.setAttribute('cx', newCx);
-      circle.setAttribute('cy', newCy);
+      circle.setAttribute('cx', svgPoint.x);
+      circle.setAttribute('cy', svgPoint.y);
 
       // Move the text for the point.
       const text = circle.parentElement.querySelector('text');
-      text.setAttribute('x', newCx);
-      text.setAttribute('y', newCy);
+      text.setAttribute('x', svgPoint.x);
+      text.setAttribute('y', svgPoint.y);
 
-      point._center = {x: newCx, y: newCy};
+      // Update the point location.
+      point._center = {x: svgPoint.x, y: svgPoint.y};
 
+      /* Why aren't these redrawn when the drag ends?
       // Remove all the connected edges.
       // These will be redrawn after the drag ends.
       const edgeIds = edgeMap[point.id];
@@ -67,9 +66,7 @@ function Point({
           hide(group.querySelector('circle'));
         }
       }
-
-      lastX = newX;
-      lastY = newY;
+      */
     }
   }
 
@@ -79,9 +76,8 @@ function Point({
   }
 
   function hide(element) {
-    if (!element) return;
-    //element.parentElement.removeChild(element);
-    //element.style.display = 'none';
+    if (element) element.parentElement.removeChild(element);
+    //if (element) element.style.display = 'none';
   }
 
   return (
