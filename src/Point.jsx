@@ -68,8 +68,10 @@ function Point({
       if (group) group.style.opacity = opacity;
     }
 
-    let popup = svg.querySelector('.popup');
-    if (popup) popup.style.opacity = opacity;
+    if (svg) {
+      let popup = svg.querySelector('.popup');
+      if (popup) popup.style.opacity = opacity;
+    }
   }
 
   return (
