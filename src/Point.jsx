@@ -26,9 +26,8 @@ function Point({
 
   function handlePointerDown(event) {
     dragging = true;
-    //hover(null);
-    setEdgeOpacities(0);
     svg = event.target.parentElement.parentElement;
+    setOpacities(0);
   }
 
   function handlePointerMove(event) {
@@ -59,15 +58,18 @@ function Point({
   function handlePointerUp() {
     dragging = false;
     dragged();
-    setEdgeOpacities(1);
+    setOpacities(1);
   }
 
-  function setEdgeOpacities(opacity) {
+  function setOpacities(opacity) {
     const edgeIds = edgeMap[point.id];
     for (const edgeId of edgeIds) {
       const group = document.getElementById(edgeId);
       if (group) group.style.opacity = opacity;
     }
+
+    let popup = svg.querySelector('.popup');
+    if (popup) popup.style.opacity = opacity;
   }
 
   return (
