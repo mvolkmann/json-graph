@@ -2,9 +2,18 @@ import React from 'react';
 import {limitText} from './utilities/string';
 import './Point.scss';
 
-function Point({edgeMap, hover, isSelected, point, prop, radius, select}) {
+function Point({
+  dragged,
+  edgeMap,
+  hover,
+  isSelected,
+  point,
+  prop,
+  radius,
+  select
+}) {
   if (!point._placed) return null;
-  const {_center, id} = point;
+  const {_center} = point;
   if (!_center) return null;
 
   let dragging = false;
@@ -19,29 +28,15 @@ function Point({edgeMap, hover, isSelected, point, prop, radius, select}) {
     lastX = event.clientX;
     lastY = event.clientY;
     dragging = true;
-
-    // Debugging
-    const pointId = event.target.id;
-    const edges = edgeMap[pointId];
-    console.log('edges from', pointId, 'are', edges);
-    if (edges) {
-      for (const edge of edges) {
-        console.log('Graph.js x: line =', document.getElementById(edge));
-      }
-    }
   }
 
   function handlePointerMove(event) {
     if (dragging) {
+      // Move the circle for the point.
       const circle = event.target;
-      const pointId = circle.getAttribute('id');
-      console.log('Graph.js x: pointId =', pointId);
       const cx = Number(circle.getAttribute('cx'));
-      //console.log('Graph.js x: cx =', cx);
       const cy = Number(circle.getAttribute('cy'));
       const newX = event.clientX;
-      //console.log('Graph.js x: newX =', newX);
-      //console.log('Graph.js x: lastX =', lastX);
       const newY = event.clientY;
       const dx = newX - lastX;
       const dy = newY - lastY;
@@ -50,39 +45,74 @@ function Point({edgeMap, hover, isSelected, point, prop, radius, select}) {
       circle.setAttribute('cx', newCx);
       circle.setAttribute('cy', newCy);
 
-      // Find all the connected edges and update their endpoints.
-      const edgeIds = edgeMap[circle.getAttribute('id')];
-      console.log('Graph.js x: edgeIds =', edgeIds);
+      // Move the text for the point.
+      const text = circle.parentElement.querySelector('text');
+      text.setAttribute('x', newCx);
+      text.setAttribute('y', newCy);
+
+      point._center = {x: newCx, y: newCy};
+
       /*
+      // Find all the connected edges and update their endpoints.
+      const edgeIds = edgeMap[point.id];
+      console.log('Point.jsx x: edgeIds =', edgeIds);
       for (const edgeId of edgeIds) {
-        const line = document.getElementById(edgeId);
-        const startId = line.getAttribute('data-start-id');
-        const sourceEnd = startId === pointId;
-        const xAttr = sourceEnd ? 'x1' : 'x2';
-        const yAttr = sourceEnd ? 'y1' : 'y2';
-        const x = Number(line.getAttribute(xAttr));
-        const y = Number(line.getAttribute(yAttr));
-        line.setAttribute(xAttr, x + dx);
-        line.setAttribute(yAttr, y + dy);
+        const group = document.getElementById(edgeId);
+        if (!group) continue;
+
+        const line = group.querySelector('line');
+        if (line) {
+          // non-cycle edge
+          // Get the endpoints of the line
+          let x1 = Number(line.getAttribute('x1'));
+          let y1 = Number(line.getAttribute('y1'));
+          let x2 = Number(line.getAttribute('x2'));
+          let y2 = Number(line.getAttribute('y2'));
+
+          // Move one of the line endpoints for the edge.
+          const startId = line.getAttribute('data-start-id');
+          const sourceEnd = startId === String(point.id);
+          if (sourceEnd) {
+            x1 += dx;
+            y1 += dy;
+            line.setAttribute('x1', x1);
+            line.setAttribute('y1', y1);
+          } else {
+            x2 += dx;
+            y2 += dy;
+            line.setAttribute('x2', x2);
+            line.setAttribute('y2', y2);
+          }
+
+          // Move the edge text.
+          const text = group.querySelector('text');
+          const textX = (x1 + x2) / 2;
+          const textY = (y1 + y2) / 2;
+          text.setAttribute('x', textX);
+          text.setAttribute('y', textY);
+        } else {
+          const circle = group.querySelector('circle');
+          console.log('Point.jsx x: circle =', circle);
+          if (circle) {
+            // cycle edge
+          }
+        }
       }
       */
 
       lastX = newX;
       lastY = newY;
-    } else {
-      console.log('Graph.js handlePointerMove: not dragging');
     }
   }
 
   function handlePointerUp() {
-    console.log('Graph.js handlePointerUp: entered');
     dragging = false;
+    dragged();
   }
 
   return (
     <g className={classes.join(' ')}>
       <circle
-        id={'point-' + id}
         cx={_center.x}
         cy={_center.y}
         r={radius}

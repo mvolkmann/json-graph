@@ -1,4 +1,4 @@
-import React, {Fragment, useCallback, useEffect, useRef, useState} from 'react';
+import React, {Fragment, useCallback, useRef, useState} from 'react';
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
 import {
   faCrosshairs,
@@ -41,8 +41,6 @@ function Graph({data, edgeProp, pointProp}) {
   const [, updateState] = React.useState();
   const forceUpdate = React.useCallback(() => updateState({}), []);
 
-  let edgeMap = {};
-
   let graphRef2 = useRef(null);
 
   const graphRef = useCallback(element => {
@@ -75,15 +73,6 @@ function Graph({data, edgeProp, pointProp}) {
     acc[point.id] = point;
     return acc;
   }, {});
-
-  /*
-  useEffect(() => {
-    const graph = graphRef.current;
-    console.log('Graph.jsx useEffect: graph =', graph);
-    const points = graph.querySelectorAll('.point');
-    console.log('Graph.jsx useEffect: points =', points);
-  }, [graphRef]);
-  */
 
   function changeCenter(point) {
     if (centerPoint) centerPoint._isCenter = false;
@@ -121,6 +110,7 @@ function Graph({data, edgeProp, pointProp}) {
   }
 
   function layout(width, height, centerPoint) {
+    console.log('Graph.jsx layout: entered');
     // Place the first point in the center.
     centerPoint._center = {x: width / 2, y: height / 2};
     centerPoint._layer = 0;
@@ -270,7 +260,7 @@ function Graph({data, edgeProp, pointProp}) {
     const {x, y} = hover._center;
     const rowHeight = 15;
     return (
-      <g className="popup" id="popup" key="popup">
+      <g className="popup">
         <rect
           x={x}
           y={y}
@@ -306,14 +296,6 @@ function Graph({data, edgeProp, pointProp}) {
     );
   }
 
-  function trackEdge(pointId, edgeId) {
-    console.log('Graph.js trackEdge: pointId =', pointId);
-    console.log('Graph.js trackEdge: edgeId =', edgeId);
-    let list = edgeMap[pointId];
-    if (!list) list = edgeMap[pointId] = [];
-    list.push(edgeId);
-  }
-
   function updateViewBox() {
     // Determine the required width and height
     // to display all the points.
@@ -336,6 +318,7 @@ function Graph({data, edgeProp, pointProp}) {
   }
 
   console.log('Graph.js: RENDERING AGAIN!');
+  const edgeMap = {};
   return (
     <div className="graph" ref={graphRef}>
       {renderControls()}
@@ -350,6 +333,7 @@ function Graph({data, edgeProp, pointProp}) {
             <Fragment key={'edge' + index}>
               <Edge
                 edge={edge}
+                edgeMap={edgeMap}
                 hover={setHover}
                 pointMap={pointMap}
                 prop={selectedEdgeProp}
@@ -360,6 +344,7 @@ function Graph({data, edgeProp, pointProp}) {
           {points.map((point, index) => (
             <Fragment key={'point' + index}>
               <Point
+                dragged={forceUpdate}
                 edgeMap={edgeMap}
                 hover={setHover}
                 isSelected={point === selectedPoint}
