@@ -22,15 +22,18 @@ function Point({
   if (isSelected) classes.push('selected');
   if (point._isCenter) classes.push('center');
 
+  var svg;
+
   function handlePointerDown(event) {
     dragging = true;
+    //hover(null);
     setEdgeOpacities(0);
+    svg = event.target.parentElement.parentElement;
   }
 
   function handlePointerMove(event) {
     if (dragging) {
       // Get the location of the mouse cursor in SVG coordinates.
-      var svg = event.target.parentElement.parentElement;
       var screenPoint = svg.createSVGPoint();
       screenPoint.x = event.clientX;
       screenPoint.y = event.clientY;
@@ -75,7 +78,7 @@ function Point({
         r={radius}
         onClick={() => select(point)}
         onMouseEnter={() => hover(point)}
-        //onMouseLeave={() => setHoverPoint(null)}
+        //onMouseLeave={() => hover(null)}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}

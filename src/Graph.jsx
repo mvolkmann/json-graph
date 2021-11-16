@@ -256,7 +256,9 @@ function Graph({data, edgeProp, pointProp}) {
     if (!hover || !hover._center) return null;
 
     const props = getObjectProps(hover);
-    const {x, y} = hover._center;
+    let {x, y} = hover._center;
+    x += 10;
+    y += 10;
     const rowHeight = 15;
     return (
       <g className="popup">
