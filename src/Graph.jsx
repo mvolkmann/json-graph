@@ -1,4 +1,4 @@
-import React, {useCallback, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
 import {
   faCrosshairs,
@@ -78,6 +78,15 @@ function Graph({data, edgeProp, pointProp}) {
     acc[point.id] = point;
     return acc;
   }, {});
+
+  /*
+  useEffect(() => {
+    const graph = graphRef.current;
+    console.log('Graph.jsx useEffect: graph =', graph);
+    const points = graph.querySelectorAll('.point');
+    console.log('Graph.jsx useEffect: points =', points);
+  }, [graphRef]);
+  */
 
   function changeCenter(point) {
     if (centerPoint) centerPoint._isCenter = false;
@@ -264,7 +273,7 @@ function Graph({data, edgeProp, pointProp}) {
     const {x, y} = hover._center;
     const rowHeight = 15;
     return (
-      <g className="popup">
+      <g className="popup" id="popup" key="popup">
         <rect
           x={x}
           y={y}
@@ -340,25 +349,29 @@ function Graph({data, edgeProp, pointProp}) {
           viewBox={viewBox}
           style={{width: width * zoom + 'px', height: height * zoom + 'px'}}
         >
-          {edges.map(edge => (
-            <Edge
-              edge={edge}
-              hover={setHover}
-              pointMap={pointMap}
-              prop={selectedEdgeProp}
-              radius={NODE_RADIUS}
-            />
+          {edges.map((edge, index) => (
+            <React.Fragment key={'edge' + index}>
+              <Edge
+                edge={edge}
+                hover={setHover}
+                pointMap={pointMap}
+                prop={selectedEdgeProp}
+                radius={NODE_RADIUS}
+              />
+            </React.Fragment>
           ))}
-          {points.map(point => (
-            <Point
-              edgeMap={edgeMap}
-              hover={setHover}
-              isSelected={point === selectedPoint}
-              point={point}
-              prop={selectedPointProp}
-              radius={NODE_RADIUS}
-              select={setSelectedPoint}
-            />
+          {points.map((point, index) => (
+            <React.Fragment key={'point' + index}>
+              <Point
+                edgeMap={edgeMap}
+                hover={setHover}
+                isSelected={point === selectedPoint}
+                point={point}
+                prop={selectedPointProp}
+                radius={NODE_RADIUS}
+                select={setSelectedPoint}
+              />
+            </React.Fragment>
           ))}
           {renderPopup(hover)}
         </svg>

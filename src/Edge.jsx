@@ -81,6 +81,8 @@ function Edge({edge, hover, pointMap, prop, radius}) {
     return (
       <polygon
         className="arrow"
+        id="polygon"
+        key="polygon"
         points={points}
         onMouseEnter={() => hover(edge)}
       />
@@ -88,10 +90,11 @@ function Edge({edge, hover, pointMap, prop, radius}) {
   }
 
   return (
-    <g className="edge" key={edgeId}>
+    <g className="edge">
       <line
         id={edgeId}
         data-start-id={source}
+        key="line"
         x1={center1.x}
         y1={center1.y}
         x2={center2.x}
@@ -100,7 +103,7 @@ function Edge({edge, hover, pointMap, prop, radius}) {
         //onMouseLeave={() => setHoverEdge(null)}
       />
       {renderArrow(edge)}
-      <text x={edge._center.x} y={edge._center.y}>
+      <text id="text" key="text" x={edge._center.x} y={edge._center.y}>
         {edge[prop]}
       </text>
     </g>

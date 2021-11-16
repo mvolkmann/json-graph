@@ -80,7 +80,7 @@ function Point({edgeMap, hover, isSelected, point, prop, radius, select}) {
   }
 
   return (
-    <g className={classes.join(' ')} key={'point-' + point.id}>
+    <g className={classes.join(' ')}>
       <circle
         id={'point-' + id}
         cx={_center.x}
@@ -93,7 +93,7 @@ function Point({edgeMap, hover, isSelected, point, prop, radius, select}) {
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
       />
-      <text key={'text' + point.id} x={_center.x} y={_center.y}>
+      <text x={_center.x} y={_center.y}>
         {limitText(point[prop])}
       </text>
     </g>
