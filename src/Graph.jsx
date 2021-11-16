@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, {Fragment, useCallback, useEffect, useRef, useState} from 'react';
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
 import {
   faCrosshairs,
@@ -350,7 +350,7 @@ function Graph({data, edgeProp, pointProp}) {
           style={{width: width * zoom + 'px', height: height * zoom + 'px'}}
         >
           {edges.map((edge, index) => (
-            <React.Fragment key={'edge' + index}>
+            <Fragment key={'edge' + index}>
               <Edge
                 edge={edge}
                 hover={setHover}
@@ -358,10 +358,10 @@ function Graph({data, edgeProp, pointProp}) {
                 prop={selectedEdgeProp}
                 radius={NODE_RADIUS}
               />
-            </React.Fragment>
+            </Fragment>
           ))}
           {points.map((point, index) => (
-            <React.Fragment key={'point' + index}>
+            <Fragment key={'point' + index}>
               <Point
                 edgeMap={edgeMap}
                 hover={setHover}
@@ -371,7 +371,7 @@ function Graph({data, edgeProp, pointProp}) {
                 radius={NODE_RADIUS}
                 select={setSelectedPoint}
               />
-            </React.Fragment>
+            </Fragment>
           ))}
           {renderPopup(hover)}
         </svg>
