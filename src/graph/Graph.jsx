@@ -14,6 +14,7 @@ import ColorPicker from '../ColorPicker.jsx';
 import { getCssVariable, setCssVariable } from '../utils/css';
 import { distanceBetweenPoints } from '../utils/math';
 import { getObjectProps } from '../utils/object';
+import { titleCase } from '../utils/string';
 
 import './Graph.scss';
 
@@ -266,6 +267,7 @@ function Graph({ data, edgeProp, pointProp }) {
 
   function renderPopup(hover) {
     if (!hover || !hover._center) return null;
+    console.log('Graph.jsx renderPopup: hover =', hover);
 
     const props = getObjectProps(hover);
 
@@ -292,8 +294,8 @@ function Graph({ data, edgeProp, pointProp }) {
             .filter((p) => typeof hover[p] !== 'object')
             .map((prop, index) => (
               <tr key={prop}>
-                <td className="prop-name">{prop}</td>
-                <td className="prop-value">{hover[prop]}</td>
+                <td className="prop-name">{titleCase(prop)}</td>
+                <td className="prop-value">{String(hover[prop])}</td>
               </tr>
             ))}
         </tbody>
