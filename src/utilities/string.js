@@ -1,4 +1,4 @@
-const MAX_TEXT_LENGTH = 8;
+const MAX_TEXT_LENGTH = 12;
 
 export function limitText(text) {
   const t = String(text);

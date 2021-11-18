@@ -17,7 +17,7 @@ import {getObjectProps} from './utilities/object';
 
 import './Graph.scss';
 
-const NODE_RADIUS = 30;
+const NODE_RADIUS = 45;
 const NODE_DIAMETER = NODE_RADIUS * 2;
 const DELTA_ARC_LENGTH = NODE_RADIUS * 2.5;
 const DELTA_RADIUS = 150;
@@ -93,9 +93,15 @@ function Graph({data, edgeProp, pointProp}) {
     const newHeight = height * newZoom;
     const dx = (width - newWidth) / 2;
     const dy = (height - newHeight) / 2;
-    const {style} = svgRef.current;
-    style.left = dx + 'px';
-    style.top = dy + 'px';
+
+    const {current} = svgRef;
+    const {style} = current;
+    style.width = newWidth + 'px';
+    style.height = newHeight + 'px';
+
+    const container = current.parentElement;
+    container.scrollLeft = -dx;
+    container.scrollTop = -dy;
   }
 
   function getTargetPoints(point) {
@@ -221,6 +227,9 @@ function Graph({data, edgeProp, pointProp}) {
 
   function setColor(kind, color) {
     setCssVariable(graphRef2, '--' + kind + '-color', color);
+    if (kind === 'point') setPointColor(color);
+    if (kind === 'edge') setEdgeColor(color);
+    if (kind === 'text') setTextColor(color);
   }
 
   function renderControls() {
@@ -256,26 +265,32 @@ function Graph({data, edgeProp, pointProp}) {
     if (!hover || !hover._center) return null;
 
     const props = getObjectProps(hover);
+
     let {x, y} = hover._center;
-    x += 10;
-    y += 10;
-    const rowHeight = 15;
+
+    // Convert the center of the point or edge over which we are hovering
+    // from SVG coordinates to screen coordinates.
+    const svg = svgRef.current;
+    var svgPoint = svg.createSVGPoint();
+    svgPoint.x = x;
+    svgPoint.y = y;
+    const screenPoint = svgPoint.matrixTransform(svg.getScreenCTM());
+
+    // Position the popup.
+    const style = {
+      left: screenPoint.x + 'px',
+      top: screenPoint.y + 'px'
+    };
+
     return (
-      <g className="popup">
-        <rect
-          x={x}
-          y={y}
-          width="100"
-          height={(props.length + 0.5) * rowHeight}
-        />
-        <text x={x} y={y}>
-          {props.map((prop, index) => (
-            <tspan key={prop} x={x + 5} y={y + (index + 1) * rowHeight}>
-              {prop}: {hover[prop]}
-            </tspan>
-          ))}
-        </text>
-      </g>
+      <table className="popup" style={style}>
+        {props.map((prop, index) => (
+          <tr key={prop}>
+            <td className="prop-name">{prop}</td>
+            <td className="prop-value">{hover[prop]}</td>
+          </tr>
+        ))}
+      </table>
     );
   }
 
@@ -319,6 +334,7 @@ function Graph({data, edgeProp, pointProp}) {
   }
 
   const edgeMap = {};
+
   return (
     <div className="graph" ref={graphRef}>
       {renderControls()}
@@ -355,8 +371,8 @@ function Graph({data, edgeProp, pointProp}) {
               />
             </Fragment>
           ))}
-          {renderPopup(hover)}
         </svg>
+        {renderPopup(hover)}
       </div>
     </div>
   );
