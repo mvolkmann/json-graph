@@ -1,5 +1,5 @@
 import React from 'react';
-import {limitText} from './utilities/string';
+import { limitText } from '../utils/string';
 import './Point.scss';
 
 function Point({
@@ -13,7 +13,7 @@ function Point({
   select
 }) {
   if (!point._placed) return null;
-  const {_center} = point;
+  const { _center } = point;
   if (!_center) return null;
 
   let dragging = false;
@@ -51,7 +51,7 @@ function Point({
       text.setAttribute('y', svgPoint.y);
 
       // Update the point location.
-      point._center = {x: svgPoint.x, y: svgPoint.y};
+      point._center = { x: svgPoint.x, y: svgPoint.y };
     }
   }
 

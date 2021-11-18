@@ -1,12 +1,13 @@
-import Graph from './Graph.jsx';
+import React from 'react';
+import Graph from './graph/Graph-old.jsx';
+import data from './graph/graph.json';
+
 import './App.css';
-import data from './graph.json';
-//import data from './graph2.json';
 
 function App() {
   function getProp(collection, defaultProp) {
     const keys = Object.keys(data[collection][0]).filter(
-      key => key !== 'source' && key !== 'target'
+      (key) => key !== 'source' && key !== 'target'
     );
     return keys.includes(defaultProp) ? defaultProp : keys[0];
   }

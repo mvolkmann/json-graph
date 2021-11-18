@@ -6,4 +6,4 @@ export function distanceBetweenPoints(point1, point2) {
   return Math.sqrt(dx ** 2 + dy ** 2);
 }
 
-export const radiansToDegrees = radians => (radians * 180) / (2 * Math.PI);
+export const radiansToDegrees = (radians) => (radians * 180) / (2 * Math.PI);

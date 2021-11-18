@@ -1,11 +1,11 @@
 import React from 'react';
-import {v4 as uuidV4} from 'uuid';
+import { v4 as uuidV4 } from 'uuid';
 import './Edge.scss';
 
 const ARROW_LENGTH = 10;
 
-function Edge({edge, edgeMap, hover, pointMap, prop, radius}) {
-  const {source, target} = edge;
+function Edge({ edge, edgeMap, hover, pointMap, prop, radius }) {
+  const { source, target } = edge;
   const p1 = pointMap[source];
   const p2 = pointMap[target];
   if (!p1 || !p2) return null;
@@ -71,8 +71,8 @@ function Edge({edge, edgeMap, hover, pointMap, prop, radius}) {
 
     const dx = (Math.sin(angle) * ARROW_LENGTH) / 2;
     const dy = (Math.cos(angle) * ARROW_LENGTH) / 2;
-    const arrowLeft = {x: middle.x - dx, y: middle.y + dy};
-    const arrowRight = {x: middle.x + dx, y: middle.y - dy};
+    const arrowLeft = { x: middle.x - dx, y: middle.y + dy };
+    const arrowRight = { x: middle.x + dx, y: middle.y - dy };
 
     const points =
       `${tip.x},${tip.y} ` +
@@ -90,7 +90,7 @@ function Edge({edge, edgeMap, hover, pointMap, prop, radius}) {
   function renderText() {
     const x = (center1.x + center2.x) / 2;
     const y = (center1.y + center2.y) / 2;
-    edge._center = {x, y};
+    edge._center = { x, y };
     return (
       <text x={x} y={y}>
         {edge[prop]}

@@ -10,6 +10,6 @@ const HIDDEN_PROPS = new Set([
 
 export function getObjectProps(object) {
   return Object.keys(object)
-    .filter(key => !HIDDEN_PROPS.has(key))
+    .filter((key) => !HIDDEN_PROPS.has(key))
     .sort();
 }
