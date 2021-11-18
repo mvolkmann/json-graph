@@ -1,5 +1,5 @@
 import React from 'react';
-import Graph from './graph/Graph-old.jsx';
+import Graph from './graph/Graph.jsx';
 import data from './graph/graph.json';
 
 import './App.css';

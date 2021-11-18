@@ -285,17 +285,17 @@ function Graph({ data, edgeProp, pointProp }) {
       top: screenPoint.y + 'px'
     };
 
-    console.log('Graph.jsx renderPopup: hover =', hover);
-    console.log('Graph.jsx renderPopup: props =', props);
     return (
       <table className="popup" style={style}>
         <tbody>
-          {props.map((prop, index) => (
-            <tr key={prop}>
-              <td className="prop-name">{prop}</td>
-              <td className="prop-value">{hover[prop]}</td>
-            </tr>
-          ))}
+          {props
+            .filter((p) => typeof hover[p] !== 'object')
+            .map((prop, index) => (
+              <tr key={prop}>
+                <td className="prop-name">{prop}</td>
+                <td className="prop-value">{hover[prop]}</td>
+              </tr>
+            ))}
         </tbody>
       </table>
     );

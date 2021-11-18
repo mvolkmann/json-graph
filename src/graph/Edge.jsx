@@ -113,7 +113,7 @@ function Edge({ edge, edgeMap, hover, pointMap, prop, radius }) {
         x2={center2.x}
         y2={center2.y}
         onMouseEnter={() => hover(edge)}
-        //onMouseLeave={() => setHoverEdge(null)}
+        onMouseLeave={() => hover(null)}
       />
       {renderArrow()}
       {renderText()}

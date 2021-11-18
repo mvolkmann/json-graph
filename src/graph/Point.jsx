@@ -82,7 +82,7 @@ function Point({
         r={radius}
         onClick={() => select(point)}
         onMouseEnter={() => hover(point)}
-        //onMouseLeave={() => hover(null)}
+        onMouseLeave={() => hover(null)}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
