@@ -1,7 +1,7 @@
 import Graph from './components/graph/Graph';
 import './App.css';
-import data from './graph.json';
-//import data from './graph2.json';
+import data from './graph-big.json';
+//import data from './graph-test.json';
 
 function App() {
   return (

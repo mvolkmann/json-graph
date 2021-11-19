@@ -167,26 +167,37 @@ function Graph({data, edgeProp, pointProp}) {
       sourceCenter.x - graphCenter.x
     );
 
-    let angle = sourceAngle - arcAngle / 2;
+    const originalAngle = sourceAngle - arcAngle / 2;
+    let angle = originalAngle;
+
     for (const targetPoint of targetPoints) {
       targetPoint._center = {
         x: graphCenter.x + Math.cos(angle) * targetRadius,
         y: graphCenter.y + Math.sin(angle) * targetRadius
       };
       targetPoint._layer = layer;
-
-      if (pointOverlaps(targetPoint)) {
-        const newRadius = targetRadius + DELTA_RADIUS * 0.7;
-        angle += 0.07; // offsets lines just a bit for less overlap
-        targetPoint._center = {
-          x: graphCenter.x + Math.cos(angle) * newRadius,
-          y: graphCenter.y + Math.sin(angle) * newRadius
-        };
-        targetPoint._layer++;
-      }
-
       targetPoint._placed = true;
       angle += deltaAngle;
+    }
+
+    // Resolve overlaps.
+    let overlapFound = true;
+    while (overlapFound) {
+      overlapFound = false;
+
+      let angle = originalAngle;
+      for (const targetPoint of targetPoints) {
+        if (pointOverlaps(targetPoint)) {
+          overlapFound = true;
+          targetPoint._layer++;
+          const newRadius = targetPoint._layer * DELTA_RADIUS;
+          targetPoint._center = {
+            x: graphCenter.x + Math.cos(angle) * newRadius,
+            y: graphCenter.y + Math.sin(angle) * newRadius
+          };
+        }
+        angle += deltaAngle;
+      }
     }
 
     for (const targetPoint of targetPoints) {
@@ -217,16 +228,17 @@ function Graph({data, edgeProp, pointProp}) {
   }
 
   function pointOverlaps(point) {
-    const {_layer} = point;
-    const pointsToCheck = Object.values(pointMap).filter(
-      p => p._placed && p._layer >= _layer
-    );
-    return pointsToCheck.some(p => {
+    const placedPoints = Object.values(pointMap).filter(p => p._placed);
+    for (const p of placedPoints) {
       // Don't check a point against itself.
-      if (p.id === point.id) return false;
-
-      return distanceBetweenPoints(point, p) < NODE_DIAMETER;
-    });
+      if (
+        p.id !== point.id &&
+        distanceBetweenPoints(point, p) < NODE_DIAMETER
+      ) {
+        return true;
+      }
+    }
+    return false;
   }
 
   function setColor(kind, color) {
