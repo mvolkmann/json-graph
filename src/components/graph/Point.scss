@@ -1,0 +1,29 @@
+.point {
+  &.center {
+    & > circle {
+      fill: var(--center-color);
+    }
+  }
+
+  circle {
+    fill: white;
+    stroke: var(--point-color);
+    stroke-width: var(--point-width);
+  }
+
+  circle:hover {
+    stroke: var(--hover-color);
+  }
+
+  &:hover {
+    pointer-events: bounding-box;
+
+    & > circle {
+      stroke: var(--hover-color);
+    }
+  }
+
+  &.selected > circle {
+    fill: lightgreen;
+  }
+}
