@@ -1,3 +1,25 @@
 {
-  "cSpell.words": ["Crosshairs", "hstack", "vstack"]
+  "cSpell.words": [
+    "antlr",
+    "CGLIB",
+    "clinit",
+    "Crosshairs",
+    "databind",
+    "DATASOURCE",
+    "fasterxml",
+    "hikari",
+    "hotspot",
+    "hstack",
+    "Introspector",
+    "javax",
+    "JDBC",
+    "jhipster",
+    "Milli",
+    "Millis",
+    "Nanos",
+    "servlet",
+    "springframework",
+    "vstack",
+    "zaxxer"
+  ]
 }
