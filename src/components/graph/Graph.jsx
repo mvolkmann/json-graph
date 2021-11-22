@@ -1,5 +1,5 @@
-import React, {Fragment, useCallback, useRef, useState} from 'react';
-import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
+import React, { Fragment, useCallback, useRef, useState } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faCrosshairs,
   faSearchMinus,
@@ -11,10 +11,10 @@ import {
 import Point from './Point.jsx';
 import Edge from './Edge.jsx';
 import ColorPicker from '../ColorPicker.jsx';
-import {getCssVariable, setCssVariable} from '../../utils/css';
-import {distanceBetweenPoints} from '../../utils/math';
-import {getObjectProps} from '../../utils/object';
-import {titleCase} from '../../utils/string';
+import { getCssVariable, setCssVariable } from '../../utils/css';
+import { distanceBetweenPoints } from '../../utils/math';
+import { getObjectProps } from '../../utils/object';
+import { titleCase } from '../../utils/string';
 
 import './Graph.scss';
 
@@ -24,12 +24,13 @@ const DELTA_ARC_LENGTH = NODE_RADIUS * 2.5;
 const DELTA_RADIUS = 150;
 const ZOOM_FACTOR = 0.25;
 
-function Graph({data, edgeProp, pointProp}) {
+function Graph({ data, edgeProp, pointProp }) {
   const [edgeColor, setEdgeColor] = useState('black');
-  const {edges, points} = data;
+  const { edges, points } = data;
   const [centerPoint, setCenterPoint] = useState(null);
   const [height, setHeight] = useState(0);
   const [hover, setHover] = useState(null);
+  const [mouseDown, setMouseDown] = useState(false);
   const [pointColor, setPointColor] = useState('black');
   const [selectedEdgeProp, setSelectedEdgeProp] = useState(edgeProp);
   const [selectedPoint, setSelectedPoint] = useState(null);
@@ -44,7 +45,7 @@ function Graph({data, edgeProp, pointProp}) {
 
   let graphRef2 = useRef(null);
 
-  const graphRef = useCallback(element => {
+  const graphRef = useCallback((element) => {
     if (!element) return;
 
     graphRef2.current = element;
@@ -84,7 +85,7 @@ function Graph({data, edgeProp, pointProp}) {
     setSelectedPoint(null);
 
     // Allow all the points to be "placed" again.
-    Object.values(pointMap).map(p => (p._placed = false));
+    Object.values(pointMap).map((p) => (p._placed = false));
 
     layout(width, height, point);
     setZoom(1.0);
@@ -101,8 +102,8 @@ function Graph({data, edgeProp, pointProp}) {
     const dx = (width - newWidth) / 2;
     const dy = (height - newHeight) / 2;
 
-    const {current} = svgRef;
-    const {style} = current;
+    const { current } = svgRef;
+    const { style } = current;
     style.width = newWidth + 'px';
     style.height = newHeight + 'px';
 
@@ -113,18 +114,26 @@ function Graph({data, edgeProp, pointProp}) {
 
   function getTargetPoints(point) {
     // Find all the edges starting from this point.
-    const targetEdges = edges.filter(edge => edge.source === point.id);
+    const targetEdges = edges.filter((edge) => edge.source === point.id);
 
     // Find all the points that are targets of these edges
     // and have not been placed yet.
     return targetEdges
-      .map(edge => pointMap[edge.target])
-      .filter(point => point && !point._placed);
+      .map((edge) => pointMap[edge.target])
+      .filter((point) => point && !point._placed);
+  }
+
+  function handleMove(event) {
+    if (!mouseDown) return;
+    const { movementX, movementY } = event;
+    const parent = svgRef.current.parentElement;
+    if (movementX) parent.scrollLeft -= movementX;
+    if (movementY) parent.scrollTop -= movementY;
   }
 
   function layout(width, height, centerPoint) {
     // Place the first point in the center.
-    centerPoint._center = {x: width / 2, y: height / 2};
+    centerPoint._center = { x: width / 2, y: height / 2 };
     centerPoint._layer = 0;
     centerPoint._placed = true;
 
@@ -161,7 +170,7 @@ function Graph({data, edgeProp, pointProp}) {
     const deltaAngle = arcAngle / (count - 1);
 
     const sourceCenter = sourcePoint._center;
-    const graphCenter = {x: width / 2, y: height / 2};
+    const graphCenter = { x: width / 2, y: height / 2 };
     const sourceAngle = Math.atan2(
       sourceCenter.y - graphCenter.y,
       sourceCenter.x - graphCenter.x
@@ -212,7 +221,7 @@ function Graph({data, edgeProp, pointProp}) {
     // spreading these points around a circle.
     const deltaAngle = (2 * Math.PI) / targetPoints.length;
 
-    const {_center} = sourcePoint;
+    const { _center } = sourcePoint;
     let angle = 0;
     for (const targetPoint of targetPoints) {
       targetPoint._center = {
@@ -228,7 +237,7 @@ function Graph({data, edgeProp, pointProp}) {
   }
 
   function pointOverlaps(point) {
-    const placedPoints = Object.values(pointMap).filter(p => p._placed);
+    const placedPoints = Object.values(pointMap).filter((p) => p._placed);
     for (const p of placedPoints) {
       // Don't check a point against itself.
       if (
@@ -257,22 +266,32 @@ function Graph({data, edgeProp, pointProp}) {
         <ColorPicker kind="edge" setColor={setColor} value={edgeColor} />
         <ColorPicker kind="text" setColor={setColor} value={textColor} />
         <div className="buttons">
-          <button onClick={() => changeZoom(zoom + ZOOM_FACTOR)}>
+          <button
+            onClick={() => changeZoom(zoom + ZOOM_FACTOR)}
+            title="zoom in"
+          >
             <FontAwesomeIcon icon={faSearchPlus} size="lg" />
           </button>
-          <button onClick={() => changeZoom(zoom - ZOOM_FACTOR)}>
+          <button
+            onClick={() => changeZoom(zoom - ZOOM_FACTOR)}
+            title="zoom out"
+          >
             <FontAwesomeIcon icon={faSearchMinus} size="lg" />
           </button>
-          <button onClick={() => changeZoom(1)}>
+          <button onClick={() => changeZoom(1)} title="reset zoom">
             <FontAwesomeIcon icon={faUndo} size="lg" />
           </button>
           <button
             disabled={!selectedPoint}
             onClick={() => changeCenter(selectedPoint)}
+            title="change center point"
           >
             <FontAwesomeIcon icon={faCrosshairs} size="lg" />
           </button>
-          <button onClick={() => changeCenter(points[0])}>
+          <button
+            onClick={() => changeCenter(points[0])}
+            title="reset center point"
+          >
             <FontAwesomeIcon icon={faSync} size="lg" />
           </button>
         </div>
@@ -285,7 +304,7 @@ function Graph({data, edgeProp, pointProp}) {
 
     const props = getObjectProps(hover);
 
-    let {x, y} = hover._center;
+    let { x, y } = hover._center;
 
     // Convert the center of the point or edge over which we are hovering
     // from SVG coordinates to screen coordinates.
@@ -305,7 +324,7 @@ function Graph({data, edgeProp, pointProp}) {
       <table className="popup" style={style}>
         <tbody>
           {props
-            .filter(p => typeof hover[p] !== 'object')
+            .filter((p) => typeof hover[p] !== 'object')
             .map((prop, index) => (
               <tr key={prop}>
                 <td className="prop-name">{titleCase(prop)}</td>
@@ -326,8 +345,8 @@ function Graph({data, edgeProp, pointProp}) {
     return (
       <div className="vstack" key={key}>
         <label>{label} Property</label>
-        <select value={selected} onChange={e => setSelected(e.target.value)}>
-          {props.map(prop => (
+        <select value={selected} onChange={(e) => setSelected(e.target.value)}>
+          {props.map((prop) => (
             <option key={prop} value={prop}>
               {titleCase(prop)}
             </option>
@@ -344,9 +363,9 @@ function Graph({data, edgeProp, pointProp}) {
     let maxY = Number.NEGATIVE_INFINITY;
     let minX = Number.POSITIVE_INFINITY;
     let minY = Number.POSITIVE_INFINITY;
-    Object.values(pointMap).forEach(point => {
+    Object.values(pointMap).forEach((point) => {
       if (!point._placed) return;
-      const {x, y} = point._center;
+      const { x, y } = point._center;
       if (x > maxX) maxX = x;
       if (x < minX) minX = x;
       if (y > maxY) maxY = y;
@@ -367,9 +386,13 @@ function Graph({data, edgeProp, pointProp}) {
       <div className="container">
         <svg
           xmlns="http://www.w3.org/2000/svg"
+          onMouseDown={() => setMouseDown(true)}
+          onMouseMove={handleMove}
+          onMouseLeave={() => setMouseDown(false)}
+          onMouseUp={() => setMouseDown(false)}
           ref={svgRef}
           viewBox={viewBox}
-          style={{width: width * zoom + 'px', height: height * zoom + 'px'}}
+          style={{ width: width * zoom + 'px', height: height * zoom + 'px' }}
         >
           {edges.map((edge, index) => (
             <Fragment key={'edge' + index}>
